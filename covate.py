@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import argparse
 from build_time_series import buildseries
 
@@ -5,7 +7,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input-csv", dest="metadata", required=True,
-                        help="Input metadata csv, expects columns central_sample_id, adm1, sample_data, collection_date")
+                        help="Input metadata csv, expects columns: central_sample_id, adm1, sample_date, uk_lineage")
 
     
     args = parser.parse_args()
