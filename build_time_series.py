@@ -27,6 +27,11 @@ def buildseries(metadata, regions, adm, lineagetype):
     countbydate = groupdf.pivot_table('count', ['sample_date'], 'lineage_adm')
     countbydate.replace([np.nan], '0', inplace=True)
 
+    # get column names for lineages and convert to numeric
+    lineage_adm_cols=[item for item in countbydate.columns if item not in ["sample_date"]]
+    for col in lineage_adm_cols:
+       countbydate[col]=pd.to_numeric(countbydate[col])
+
     # only keep lineages found in at least two regions
     lineagecommon = []
     numcountry = len(region_list)
