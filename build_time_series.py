@@ -28,12 +28,15 @@ def buildseries(metadata, regions, adm, lineagetype):
     countbydate.replace([np.nan], '0', inplace=True)
 
     # only keep lineages found in at least two regions
+    lineagecommon = []
     numcountry = len(region_list)
     for lineage in lineagearr:
        listbylineage = countbydate.columns.str.startswith(lineage).tolist()
        truecount = sum(listbylineage)
        if truecount < 2:
            countbydate = countbydate.loc[:,~countbydate.columns.str.startswith(lineage)]
+       else:
+           lineagecommon.append(lineage)
 
     countbydate.to_csv('timeseries.csv', sep=',')
 
