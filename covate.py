@@ -8,11 +8,11 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input-csv", dest="metadata", required=True,
                         help="Input metadata csv, expects columns: central_sample_id, adm1/adm2, sample_date, lineage/uk_lineage")
-    parser.add_argument("-r", "--region-list", dest="regions", required=True,
+    parser.add_argument("-r", "--region-list", dest="regions", required=False, default="UK-WLS, UK-ENG",
                         help="Input list of regions to compare, e.g. UK-WLS, UK-ENG")
-    parser.add_argument("-a", "--adm", dest="adm", required=True,
+    parser.add_argument("-a", "--adm", dest="adm", required=False, default="adm1",
                         help="Select either adm1 or adm2")
-    parser.add_argument("-l", "--lineage-type", dest="lineagetype", required=True,
+    parser.add_argument("-l", "--lineage-type", dest="lineagetype", required=False, default="uk_lineage",
                         help="Select either lineage or uk_lineage")
     
     args = parser.parse_args()
