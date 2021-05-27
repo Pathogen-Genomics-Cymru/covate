@@ -44,7 +44,9 @@ def buildseries(metadata, regions, adm, lineagetype):
        else:
            lineagecommon.append(lineage)
 
-    countbydate.to_csv('timeseries.csv', sep=',')
+    countbydate.to_csv('timeseriesraw.csv', sep=',')
+
+    countbydate = padseries(countbydate)
 
     plotseries(countbydate, lineagecommon, region_list)
 
@@ -66,3 +68,11 @@ def plotseries(dataframe, lineagelist, regionlist):
       ax2.title.set_text('Lag plot for ' + lineage + ' for ' + str(regionlist))
       plt.tight_layout()
       plt.savefig(lineage + '.png')
+
+def padseries(dataframe):
+
+   dataframe = dataframe.replace(0, np.nan)
+   dataframe = dataframe.fillna(method='pad')
+   dataframe = dataframe.dropna()
+
+   return dataframe
