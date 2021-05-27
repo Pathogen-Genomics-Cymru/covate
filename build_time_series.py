@@ -1,6 +1,7 @@
 import sys
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 def buildseries(metadata, regions, adm, lineagetype):
 
@@ -45,4 +46,23 @@ def buildseries(metadata, regions, adm, lineagetype):
 
     countbydate.to_csv('timeseries.csv', sep=',')
 
+    plotseries(countbydate, lineagecommon, region_list)
+
     return countbydate
+
+def plotseries(dataframe, lineagelist, regionlist):
+
+   colors = ['r', 'g', 'b', 'm', 'c', 'y']
+
+   ncolor = 0
+   for lineage in lineagelist:
+      fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(10,6))
+      for region in regionlist:
+         dataframe[lineage + '_' + region].plot(ax=ax1, c=colors[ncolor])
+         pd.plotting.lag_plot(dataframe[lineage + '_' + region], c=colors[ncolor], ax=ax2)
+         ncolor+=1
+      ax1.title.set_text('Time series for ' + lineage + ' for ' + str(regionlist))
+      ax1.set_ylabel('Number of cases')
+      ax2.title.set_text('Lag plot for ' + lineage + ' for ' + str(regionlist))
+      plt.tight_layout()
+      plt.savefig(lineage + '.png')
