@@ -50,7 +50,7 @@ def buildseries(metadata, regions, adm, lineagetype):
 
     plotseries(countbydate, lineagecommon, region_list)
 
-    return countbydate
+    return countbydate, lineagecommon, region_list
 
 def plotseries(dataframe, lineagelist, regionlist):
 

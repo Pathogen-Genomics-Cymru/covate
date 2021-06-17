@@ -2,6 +2,7 @@
 
 import argparse
 from build_time_series import buildseries
+from stats_tests import runtests
 
 def main():
 
@@ -21,7 +22,8 @@ def main():
     adm = args.adm
     lineagetype = args.lineagetype
 
-    buildseries(metadata, regions, adm, lineagetype)
+    countbydate, lineagecommon, region_list = buildseries(metadata, regions, adm, lineagetype)
+    runtests(countbydate, lineagecommon, region_list)
 
 if __name__ == '__main__':
     main()
