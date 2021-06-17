@@ -31,18 +31,18 @@ def buildseries(metadata, regions, adm, lineagetype):
     # get column names for lineages and convert to numeric
     lineage_adm_cols=[item for item in countbydate.columns if item not in ["sample_date"]]
     for col in lineage_adm_cols:
-       countbydate[col]=pd.to_numeric(countbydate[col])
+        countbydate[col]=pd.to_numeric(countbydate[col])
 
     # only keep lineages found in at least two regions
     lineagecommon = []
     numcountry = len(region_list)
     for lineage in lineagearr:
-       listbylineage = countbydate.columns.str.startswith(lineage).tolist()
-       truecount = sum(listbylineage)
-       if truecount < 2:
-           countbydate = countbydate.loc[:,~countbydate.columns.str.startswith(lineage)]
-       else:
-           lineagecommon.append(lineage)
+        listbylineage = countbydate.columns.str.startswith(lineage).tolist()
+        truecount = sum(listbylineage)
+        if truecount < 2:
+            countbydate = countbydate.loc[:,~countbydate.columns.str.startswith(lineage)]
+        else:
+            lineagecommon.append(lineage)
 
     countbydate.to_csv('timeseriesraw.csv', sep=',')
 
@@ -54,25 +54,25 @@ def buildseries(metadata, regions, adm, lineagetype):
 
 def plotseries(dataframe, lineagelist, regionlist):
 
-   colors = ['r', 'g', 'b', 'm', 'c', 'y']
+    colors = ['r', 'g', 'b', 'm', 'c', 'y']
 
-   ncolor = 0
-   for lineage in lineagelist:
-      fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(10,6))
-      for region in regionlist:
-         dataframe[lineage + '_' + region].plot(ax=ax1, c=colors[ncolor])
-         pd.plotting.lag_plot(dataframe[lineage + '_' + region], c=colors[ncolor], ax=ax2)
-         ncolor+=1
-      ax1.title.set_text('Time series for ' + lineage + ' for ' + str(regionlist))
-      ax1.set_ylabel('Number of cases')
-      ax2.title.set_text('Lag plot for ' + lineage + ' for ' + str(regionlist))
-      plt.tight_layout()
-      plt.savefig(lineage + '.png')
+    ncolor = 0
+    for lineage in lineagelist:
+        fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(10,6))
+        for region in regionlist:
+            dataframe[lineage + '_' + region].plot(ax=ax1, c=colors[ncolor])
+            pd.plotting.lag_plot(dataframe[lineage + '_' + region], c=colors[ncolor], ax=ax2)
+            ncolor+=1
+        ax1.title.set_text('Time series for ' + lineage + ' for ' + str(regionlist))
+        ax1.set_ylabel('Number of cases')
+        ax2.title.set_text('Lag plot for ' + lineage + ' for ' + str(regionlist))
+        plt.tight_layout()
+        plt.savefig(lineage + '.png')
 
 def padseries(dataframe):
 
-   dataframe = dataframe.replace(0, np.nan)
-   dataframe = dataframe.fillna(method='pad')
-   dataframe = dataframe.dropna()
+    dataframe = dataframe.replace(0, np.nan)
+    dataframe = dataframe.fillna(method='pad')
+    dataframe = dataframe.dropna()
 
-   return dataframe
+    return dataframe
