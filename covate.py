@@ -15,14 +15,17 @@ def main():
                         help="Select either adm1 or adm2")
     parser.add_argument("-l", "--lineage-type", dest="lineagetype", required=False, default="uk_lineage",
                         help="Select either lineage or uk_lineage")
+    parser.add_argument("-t", "--time-period", dest="timeperiod", required=False, default="6",
+                        help="Select time period in months to take from metadata")
     
     args = parser.parse_args()
     metadata = args.metadata
     regions = args.regions
     adm = args.adm
     lineagetype = args.lineagetype
+    timeperiod = args.timeperiod
 
-    countbydate, lineagecommon, region_list = buildseries(metadata, regions, adm, lineagetype)
+    countbydate, lineagecommon, region_list = buildseries(metadata, regions, adm, lineagetype, timeperiod)
     runtests(countbydate, lineagecommon, region_list)
 
 if __name__ == '__main__':

@@ -2,14 +2,18 @@ import sys
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from dateutil.relativedelta import relativedelta
 
-def buildseries(metadata, regions, adm, lineagetype):
+def buildseries(metadata, regions, adm, lineagetype, timeperiod):
 
     # load metadata and index by date
     df = pd.read_csv(metadata, usecols=['central_sample_id', adm, 'sample_date', lineagetype], parse_dates=['sample_date'], index_col='sample_date', dayfirst=True)
     df.dropna(inplace=True)
     df[lineagetype] = df[lineagetype].astype(str)
     df[adm] = df[adm].astype(str)
+
+    # select time period
+    df = gettimeperiod(df, timeperiod)
 
     # get region list
     region_list = [str(region) for region in regions.split(', ')]
@@ -44,13 +48,31 @@ def buildseries(metadata, regions, adm, lineagetype):
         else:
             lineagecommon.append(lineage)
 
+    # save raw time series
     countbydate.to_csv('timeseriesraw.csv', sep=',')
 
+    # pad time series
     countbydate = padseries(countbydate)
 
+    # plot time series and lag plot
     plotseries(countbydate, lineagecommon, region_list)
 
     return countbydate, lineagecommon, region_list
+
+
+def gettimeperiod(dataframe, timeperiod):
+
+    # get the most recent date in metadata
+    enddate = dataframe.index.max()
+
+    # select previous x months from most recent date
+    startdate = enddate - relativedelta(months=+int(timeperiod))
+
+    # get range of dates
+    dataframe = dataframe.loc[str(startdate):str(enddate)]
+
+    return dataframe
+
 
 def plotseries(dataframe, lineagelist, regionlist):
 
@@ -68,6 +90,7 @@ def plotseries(dataframe, lineagelist, regionlist):
         ax2.title.set_text('Lag plot for ' + lineage + ' for ' + str(regionlist))
         plt.tight_layout()
         plt.savefig(lineage + '.png')
+
 
 def padseries(dataframe):
 
