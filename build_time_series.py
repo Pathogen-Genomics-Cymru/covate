@@ -69,7 +69,7 @@ def gettimeperiod(dataframe, timeperiod):
     startdate = enddate - relativedelta(months=+int(timeperiod))
 
     # get range of dates
-    dataframe = dataframe.loc[str(startdate):str(enddate)]
+    dataframe = dataframe.sort_index().loc[str(startdate):str(enddate)]
 
     return dataframe
 
