@@ -10,7 +10,7 @@ def runtests(timeseries, lineagelist, regionlist):
 
     grangercausality(timeseries, lineagelist, regionlist, maxlag)
 
-    #cointegration(timeseries, lineagelist, regionlist, maxlag)
+    cointegration(timeseries, lineagelist, regionlist, maxlag)
 
     adfullertest(timeseries, lineagelist)
 
@@ -37,21 +37,19 @@ def grangercausality(timeseries, lineagelist, regionlist, maxlag):
 def cointegration(timeseries, lineagelist, regionlist, maxlag):
     """Perform Johanson's Cointegration Test"""
 
-    for loc1, loc2 in pairwiseunique(regionlist):
-        for lineage in lineagelist:
-            data = pd.concat([timeseries[lineage + '_' + loc1], timeseries[lineage + '_' +  loc2]], axis=1)
-            filename = str(lineage) + '_log.txt'
-            appendtext = 'Lags with Cointegration'
-            appendline(filename, appendtext)
-            for lag in range(maxlag):
-                out = coint_johansen(data, -1, lag)
-                d = {'0.90':0, '0.95':1, '0.99':2}
-                traces = out.lr1
-                cvts = out.cvt[:, d[str(0.95)]]
-                for col, trace, cvt in zip(data.columns, traces, cvts):
-                    if trace > cvt:
-                        appendtext = str(col) + ' lag= ' + str(lag)
-                        appendline(filename, appendtext)
+    for lineage in lineagelist:
+        data = timeseries.filter(like=lineage)
+        data.reset_index(drop=True, inplace=True)
+        filename = str(lineage) + '_log.txt'
+        appendline(filename, 'Lags with Cointegration')
+        for lag in range(maxlag):
+            out = coint_johansen(data, -1, lag)
+            d = {'0.90':0, '0.95':1, '0.99':2}
+            traces = out.lr1
+            cvts = out.cvt[:, d[str(0.95)]]
+            for col, trace, cvt in zip(data.columns, traces, cvts):
+                if trace > cvt:
+                    appendline(filename, str(col) + ' lag= ' + str(lag))
 
 
 def adfullertest(timeseries, lineagelist):
