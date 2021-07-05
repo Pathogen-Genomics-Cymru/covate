@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import scipy.stats as stats
 from statsmodels.tsa.stattools import grangercausalitytests, adfuller
 from statsmodels.tsa.vector_ar.vecm import coint_johansen
 from utils import pairwise, pairwiseunique, appendline
@@ -9,11 +10,35 @@ def runtests(timeseries, lineagelist, regionlist):
     maxlag = 30
     alpha = 0.05
 
+    checkdistribution(timeseries, lineagelist, alpha)
+
     grangercausality(timeseries, lineagelist, regionlist, maxlag, alpha)
 
     cointegration(timeseries, lineagelist, regionlist, maxlag)
 
     adfullertest(timeseries, lineagelist, alpha)
+
+
+def checkdistribution(timeseries, lineagelist, alpha):
+    """Get information about distribution"""
+
+    for lineage in lineagelist:
+        data = timeseries.filter(like=lineage)
+        data.reset_index(drop=True, inplace=True)
+        filename = str(lineage) + '_log.txt'
+        for name, col in data.iteritems():
+            stat, pvalue = stats.normaltest(col)
+            appendline(filename, 'Information on distribution for ' + str(name))
+            appendline(filename, 'Stat = ' + str(round(stat, 4)))
+            appendline(filename, 'p-value = ' + str(round(pvalue, 4)))
+            if pvalue <= alpha:
+                appendline(filename, '=> Data looks non-Gaussian')
+            else:
+                appendline(filename, '=> Data looks Gaussian')
+            stat_kur = stats.kurtosis(col)
+            stat_skew = stats.skew(col)
+            appendline(filename, 'Kurtosis = ' + str(round(stat_kur, 4)))
+            appendline(filename, 'Skewness = ' + str(round(stat_skew, 4)))
 
 
 def grangercausality(timeseries, lineagelist, regionlist, maxlag, alpha):
