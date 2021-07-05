@@ -1,9 +1,11 @@
 import pandas as pd
 import numpy as np
 import scipy.stats as stats
+import matplotlib.pyplot as plt
 from statsmodels.tsa.stattools import grangercausalitytests, adfuller
 from statsmodels.tsa.vector_ar.vecm import coint_johansen
 from utils import pairwise, pairwiseunique, appendline
+from statsmodels.graphics.tsaplots import plot_acf
 
 def runtests(timeseries, lineagelist, regionlist):
 
@@ -11,6 +13,8 @@ def runtests(timeseries, lineagelist, regionlist):
     alpha = 0.05
 
     checkdistribution(timeseries, lineagelist, alpha)
+
+    plotautocorr(timeseries, lineagelist, maxlag)
 
     grangercausality(timeseries, lineagelist, regionlist, maxlag, alpha)
 
@@ -39,6 +43,18 @@ def checkdistribution(timeseries, lineagelist, alpha):
             stat_skew = stats.skew(col)
             appendline(filename, 'Kurtosis = ' + str(round(stat_kur, 4)))
             appendline(filename, 'Skewness = ' + str(round(stat_skew, 4)))
+
+
+def plotautocorr(timeseries, lineagelist, maxlag):
+    """Plot autocorrelation"""
+
+    for lineage in lineagelist:
+        data = timeseries.filter(like=lineage)
+        data.reset_index(drop=True, inplace=True)
+        for name, col in data.iteritems():
+            plot_acf(col, lags=maxlag)
+            plt.title('ACF for ' + str(name))
+            plt.savefig(name + '_ACF.png')
 
 
 def grangercausality(timeseries, lineagelist, regionlist, maxlag, alpha):
