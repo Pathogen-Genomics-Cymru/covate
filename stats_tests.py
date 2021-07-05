@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from statsmodels.tsa.stattools import grangercausalitytests
+from statsmodels.tsa.stattools import grangercausalitytests, adfuller
 from statsmodels.tsa.vector_ar.vecm import coint_johansen
 from utils import pairwise, pairwiseunique, appendline
 
@@ -11,6 +11,8 @@ def runtests(timeseries, lineagelist, regionlist):
     grangercausality(timeseries, lineagelist, regionlist, maxlag)
 
     #cointegration(timeseries, lineagelist, regionlist, maxlag)
+
+    adfullertest(timeseries, lineagelist)
 
 
 def grangercausality(timeseries, lineagelist, regionlist, maxlag):
@@ -50,3 +52,27 @@ def cointegration(timeseries, lineagelist, regionlist, maxlag):
                     if trace > cvt:
                         appendtext = str(col) + ' lag= ' + str(lag)
                         appendline(filename, appendtext)
+
+
+def adfullertest(timeseries, lineagelist):
+    """Perform ADFuller to test for Stationarity"""
+
+    signif=0.05
+
+    for lineage in lineagelist:
+        data = timeseries.filter(like=lineage)
+        data.reset_index(drop=True, inplace=True)
+        filename = str(lineage) + '_log.txt'
+        for name, col in data.iteritems():
+            stat = adfuller(col, autolag ="AIC")
+            out = {'test_statistic':round(stat[0], 4), 'pvalue':round(stat[1], 4), 'n_lags':round(stat[2], 4), 'n_obs':stat[3]}
+            p_value = out['pvalue']
+            appendline(filename, 'Augmented Dickey-Fuller Test for ' + str(name))
+            appendline(filename, 'Test Statistic = ' + str(out["test_statistic"]))
+            appendline(filename, 'No. Lags Chosen = ' + str(out["n_lags"]))
+            if p_value <= signif:
+                appendline(filename, '=> P-Value = ' +  str(p_value) + ' => Reject Null Hypothesis')
+                appendline(filename, '=> Series is Stationary')
+            else:
+                appendline(filename, '=> P-Value = ' + str(p_value))
+                appendline(filename, '=> Series is Non-Stationary')
