@@ -7,15 +7,16 @@ from utils import pairwise, pairwiseunique, appendline
 def runtests(timeseries, lineagelist, regionlist):
 
     maxlag = 30
+    alpha = 0.05
 
-    grangercausality(timeseries, lineagelist, regionlist, maxlag)
+    grangercausality(timeseries, lineagelist, regionlist, maxlag, alpha)
 
     cointegration(timeseries, lineagelist, regionlist, maxlag)
 
-    adfullertest(timeseries, lineagelist)
+    adfullertest(timeseries, lineagelist, alpha)
 
 
-def grangercausality(timeseries, lineagelist, regionlist, maxlag):
+def grangercausality(timeseries, lineagelist, regionlist, maxlag, alpha):
 
     test = "ssr_chi2test"
 
@@ -27,7 +28,7 @@ def grangercausality(timeseries, lineagelist, regionlist, maxlag):
                 p_values = [test_result[lag+1][0][test][1:3] for lag in range(maxlag)]
                 min_p_value = min(p_values, key=lambda x: x[0])
                 filename = str(lineage) + '_log.txt'
-                appendtext = 'Granger causality test result for ' + str(loc2) + '->' + str(loc1) + "\n" + '(min p-value, lag) = ' + str(min_p_value) + ' =>  ' + str(min_p_value[0] < 0.05)
+                appendtext = 'Granger causality test result for ' + str(loc2) + '->' + str(loc1) + "\n" + '(min p-value, lag) = ' + str(min_p_value) + ' =>  ' + str(min_p_value[0] <= alpha)
                 appendline(filename, appendtext)
             except:
                 appendtext = 'Granger causality test for ' + str(loc2) +  '-> ' + str(loc1) + ' failed'
@@ -52,10 +53,8 @@ def cointegration(timeseries, lineagelist, regionlist, maxlag):
                     appendline(filename, str(col) + ' lag= ' + str(lag))
 
 
-def adfullertest(timeseries, lineagelist):
+def adfullertest(timeseries, lineagelist, alpha):
     """Perform ADFuller to test for Stationarity"""
-
-    signif=0.05
 
     for lineage in lineagelist:
         data = timeseries.filter(like=lineage)
@@ -68,9 +67,10 @@ def adfullertest(timeseries, lineagelist):
             appendline(filename, 'Augmented Dickey-Fuller Test for ' + str(name))
             appendline(filename, 'Test Statistic = ' + str(out["test_statistic"]))
             appendline(filename, 'No. Lags Chosen = ' + str(out["n_lags"]))
-            if p_value <= signif:
+            if p_value <= alpha:
                 appendline(filename, '=> P-Value = ' +  str(p_value) + ' => Reject Null Hypothesis')
                 appendline(filename, '=> Series is Stationary')
             else:
                 appendline(filename, '=> P-Value = ' + str(p_value))
                 appendline(filename, '=> Series is Non-Stationary')
+
