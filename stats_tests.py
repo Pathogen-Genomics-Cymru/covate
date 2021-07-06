@@ -20,7 +20,17 @@ def runtests(timeseries, lineagelist, regionlist):
 
     cointegration(timeseries, lineagelist, regionlist, maxlag)
 
-    adfullertest(timeseries, lineagelist, alpha)
+    adf_result = adfullertest(timeseries, lineagelist, alpha)
+
+    if False in adf_result:
+        timeseries = timeseries.diff().dropna()
+        adf_result = adfullertest(first_diff, lineagelist, alpha)
+
+    if False in adf_result:
+        timeseries = timeseries.diff().dropna()
+        adf_result = adfullertest(second_diff, lineagelist, alpha)
+
+    return timeseries
 
 
 def checkdistribution(timeseries, lineagelist, alpha):
@@ -97,6 +107,7 @@ def cointegration(timeseries, lineagelist, regionlist, maxlag):
 def adfullertest(timeseries, lineagelist, alpha):
     """Perform ADFuller to test for Stationarity"""
 
+    adf_result = []
     for lineage in lineagelist:
         data = timeseries.filter(like=lineage)
         data.reset_index(drop=True, inplace=True)
@@ -111,7 +122,12 @@ def adfullertest(timeseries, lineagelist, alpha):
             if p_value <= alpha:
                 appendline(filename, '=> P-Value = ' +  str(p_value) + ' => Reject Null Hypothesis')
                 appendline(filename, '=> Series is Stationary')
+                adf_result.append(True)
             else:
                 appendline(filename, '=> P-Value = ' + str(p_value))
                 appendline(filename, '=> Series is Non-Stationary')
+                adf_result.append(False)
+
+    return adf_result
+
 
