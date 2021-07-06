@@ -12,122 +12,136 @@ def runtests(timeseries, lineagelist, regionlist):
     maxlag = 30
     alpha = 0.05
 
-    checkdistribution(timeseries, lineagelist, alpha)
+    lineageVECM = []
+    lineageVAR = []
 
-    plotautocorr(timeseries, lineagelist, maxlag)
+    for lineage in lineagelist:
 
-    grangercausality(timeseries, lineagelist, regionlist, maxlag, alpha)
+        checkdistribution(timeseries, lineage, alpha)
 
-    cointegration(timeseries, lineagelist, regionlist, maxlag)
+        plotautocorr(timeseries, lineage, maxlag)
 
-    adf_result = adfullertest(timeseries, lineagelist, alpha)
+        grangercausality(timeseries, lineage, regionlist, maxlag, alpha)
 
-    if False in adf_result:
-        timeseries = timeseries.diff().dropna()
-        adf_result = adfullertest(first_diff, lineagelist, alpha)
+        runVECM = cointegration(timeseries, lineage, regionlist, maxlag)
 
-    if False in adf_result:
-        timeseries = timeseries.diff().dropna()
-        adf_result = adfullertest(second_diff, lineagelist, alpha)
+        # if lineage has cointegration, add to list of lineages for VECM
+        if runVECM:
 
-    return timeseries
+            lineageVECM.append(lineage)
+
+        # else add to list of lineages for VAR and check for stationarity and difference
+        else:
+
+            lineageVAR.append(lineage)
+
+            data = timeseries.filter(like=lineage)
+
+            adf_result = adfullertest(data, lineagelist, alpha)
+
+            # first diff
+            if False in adf_result:
+                first_diff = data.diff().dropna()
+                adf_result = adfullertest(first_diff, lineagelist, alpha)
+
+            # second diff
+            if False in adf_result:
+                second_diff = first_diff.diff().dropna()
+                adf_result = adfullertest(second_diff, lineagelist, alpha)
 
 
-def checkdistribution(timeseries, lineagelist, alpha):
+    return timeseries, lineageVECM, lineageVAR
+
+
+def checkdistribution(timeseries, lineage, alpha):
     """Get information about distribution"""
 
-    for lineage in lineagelist:
-        data = timeseries.filter(like=lineage)
-        data.reset_index(drop=True, inplace=True)
-        filename = str(lineage) + '_log.txt'
-        for name, col in data.iteritems():
-            stat, pvalue = stats.normaltest(col)
-            appendline(filename, 'Information on distribution for ' + str(name))
-            appendline(filename, 'Stat = ' + str(round(stat, 4)))
-            appendline(filename, 'p-value = ' + str(round(pvalue, 4)))
-            if pvalue <= alpha:
-                appendline(filename, '=> Data looks non-Gaussian')
-            else:
-                appendline(filename, '=> Data looks Gaussian')
-            stat_kur = stats.kurtosis(col)
-            stat_skew = stats.skew(col)
-            appendline(filename, 'Kurtosis = ' + str(round(stat_kur, 4)))
-            appendline(filename, 'Skewness = ' + str(round(stat_skew, 4)))
+    data = timeseries.filter(like=lineage)
+    data.reset_index(drop=True, inplace=True)
+    filename = str(lineage) + '_log.txt'
+    for name, col in data.iteritems():
+        stat, pvalue = stats.normaltest(col)
+        appendline(filename, 'Information on distribution for ' + str(name))
+        appendline(filename, 'Stat = ' + str(round(stat, 4)))
+        appendline(filename, 'p-value = ' + str(round(pvalue, 4)))
+        if pvalue <= alpha:
+            appendline(filename, '=> Data looks non-Gaussian')
+        else:
+            appendline(filename, '=> Data looks Gaussian')
+        stat_kur = stats.kurtosis(col)
+        stat_skew = stats.skew(col)
+        appendline(filename, 'Kurtosis = ' + str(round(stat_kur, 4)))
+        appendline(filename, 'Skewness = ' + str(round(stat_skew, 4)))
 
 
-def plotautocorr(timeseries, lineagelist, maxlag):
+def plotautocorr(timeseries, lineage, maxlag):
     """Plot autocorrelation"""
 
-    for lineage in lineagelist:
-        data = timeseries.filter(like=lineage)
-        data.reset_index(drop=True, inplace=True)
-        for name, col in data.iteritems():
-            plot_acf(col, lags=maxlag)
-            plt.title('ACF for ' + str(name))
-            plt.savefig(name + '_ACF.png')
+    data = timeseries.filter(like=lineage)
+    data.reset_index(drop=True, inplace=True)
+    for name, col in data.iteritems():
+        plot_acf(col, lags=maxlag)
+        plt.title('ACF for ' + str(name))
+        plt.savefig(name + '_ACF.png')
 
 
-def grangercausality(timeseries, lineagelist, regionlist, maxlag, alpha):
+def grangercausality(timeseries, lineage, regionlist, maxlag, alpha):
+    """Check for Granger Causality"""
 
     test = "ssr_chi2test"
 
     for loc1, loc2 in pairwise(regionlist):
-        for lineage in lineagelist:
-            data = pd.concat([timeseries[lineage + '_' + loc1], timeseries[lineage + '_' +  loc2]], axis=1)
-            try:
-                test_result = grangercausalitytests(data, maxlag=maxlag, verbose=False)
-                p_values = [test_result[lag+1][0][test][1:3] for lag in range(maxlag)]
-                min_p_value = min(p_values, key=lambda x: x[0])
-                filename = str(lineage) + '_log.txt'
-                appendtext = 'Granger causality test result for ' + str(loc2) + '->' + str(loc1) + "\n" + '(min p-value, lag) = ' + str(min_p_value) + ' =>  ' + str(min_p_value[0] <= alpha)
-                appendline(filename, appendtext)
-            except:
-                appendtext = 'Granger causality test for ' + str(loc2) +  '-> ' + str(loc1) + ' failed'
-                appendline(filename, appendtext)
+        data = pd.concat([timeseries[lineage + '_' + loc1], timeseries[lineage + '_' +  loc2]], axis=1)
+        try:
+            test_result = grangercausalitytests(data, maxlag=maxlag, verbose=False)
+            p_values = [test_result[lag+1][0][test][1:3] for lag in range(maxlag)]
+            min_p_value = min(p_values, key=lambda x: x[0])
+            filename = str(lineage) + '_log.txt'
+            appendline(filename, 'Granger causality test result for ' + str(loc2) + '->' + str(loc1) + "\n" + '(min p-value, lag) = ' + str(min_p_value) + ' =>  ' + str(min_p_value[0] <= alpha))
+        except:
+            appendline(filename, 'Granger causality test for ' + str(loc2) +  '-> ' + str(loc1) + ' failed')
 
 
-def cointegration(timeseries, lineagelist, regionlist, maxlag):
+def cointegration(timeseries, lineage, regionlist, maxlag):
     """Perform Johanson's Cointegration Test"""
 
-    for lineage in lineagelist:
-        data = timeseries.filter(like=lineage)
-        data.reset_index(drop=True, inplace=True)
-        filename = str(lineage) + '_log.txt'
-        appendline(filename, 'Lags with Cointegration')
-        for lag in range(maxlag):
-            out = coint_johansen(data, -1, lag)
-            d = {'0.90':0, '0.95':1, '0.99':2}
-            traces = out.lr1
-            cvts = out.cvt[:, d[str(0.95)]]
-            for col, trace, cvt in zip(data.columns, traces, cvts):
-                if trace > cvt:
-                    appendline(filename, str(col) + ' lag= ' + str(lag))
+    data = timeseries.filter(like=lineage)
+    data.reset_index(drop=True, inplace=True)
+    filename = str(lineage) + '_log.txt'
+    appendline(filename, 'Lags with Cointegration')
+    for lag in range(maxlag):
+        out = coint_johansen(data, -1, lag)
+        d = {'0.90':0, '0.95':1, '0.99':2}
+        traces = out.lr1
+        cvts = out.cvt[:, d[str(0.95)]]
+        for col, trace, cvt in zip(data.columns, traces, cvts):
+            if trace > cvt:
+                appendline(filename, str(col) + ' lag= ' + str(lag)) 
+                runVECM = True
+
+    return runVECM
 
 
-def adfullertest(timeseries, lineagelist, alpha):
+def adfullertest(timeseries, lineage, alpha):
     """Perform ADFuller to test for Stationarity"""
 
     adf_result = []
-    for lineage in lineagelist:
-        data = timeseries.filter(like=lineage)
-        data.reset_index(drop=True, inplace=True)
-        filename = str(lineage) + '_log.txt'
-        for name, col in data.iteritems():
-            stat = adfuller(col, autolag ="AIC")
-            out = {'test_statistic':round(stat[0], 4), 'pvalue':round(stat[1], 4), 'n_lags':round(stat[2], 4), 'n_obs':stat[3]}
-            p_value = out['pvalue']
-            appendline(filename, 'Augmented Dickey-Fuller Test for ' + str(name))
-            appendline(filename, 'Test Statistic = ' + str(out["test_statistic"]))
-            appendline(filename, 'No. Lags Chosen = ' + str(out["n_lags"]))
-            if p_value <= alpha:
-                appendline(filename, '=> P-Value = ' +  str(p_value) + ' => Reject Null Hypothesis')
-                appendline(filename, '=> Series is Stationary')
-                adf_result.append(True)
-            else:
-                appendline(filename, '=> P-Value = ' + str(p_value))
-                appendline(filename, '=> Series is Non-Stationary')
-                adf_result.append(False)
+    filename = str(lineage) + '_log.txt'
+    for name, col in data.iteritems():
+        stat = adfuller(col, autolag ="AIC")
+        out = {'test_statistic':round(stat[0], 4), 'pvalue':round(stat[1], 4), 'n_lags':round(stat[2], 4), 'n_obs':stat[3]}
+        p_value = out['pvalue']
+        appendline(filename, 'Augmented Dickey-Fuller Test for ' + str(name))
+        appendline(filename, 'Test Statistic = ' + str(out["test_statistic"]))
+        appendline(filename, 'No. Lags Chosen = ' + str(out["n_lags"]))
+        if p_value <= alpha:
+            appendline(filename, '=> P-Value = ' +  str(p_value) + ' => Reject Null Hypothesis')
+            appendline(filename, '=> Series is Stationary')
+            adf_result.append(True)
+        else:
+            appendline(filename, '=> P-Value = ' + str(p_value))
+            appendline(filename, '=> Series is Non-Stationary')
+            adf_result.append(False)
 
     return adf_result
-
 
