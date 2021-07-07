@@ -14,7 +14,9 @@ def runtests(timeseries, lineagelist, regionlist):
 
     lineageVECM = []
     lineageVAR = []
+    VARdiff = []
 
+    count=0
     for lineage in lineagelist:
 
         checkdistribution(timeseries, lineage, alpha)
@@ -39,18 +41,30 @@ def runtests(timeseries, lineagelist, regionlist):
 
             adf_result = adfullertest(data, lineagelist, alpha)
 
-            # first diff
+            # record whether no diff, first diff or second diff
+            VARdiff.insert(count, 'none')
+
+            # first diff and recalculate ADF
             if False in adf_result:
                 first_diff = data.diff().dropna()
                 adf_result = adfullertest(first_diff, lineagelist, alpha)
+                VARdiff[count] =  'first'
+                # update timeseries
+                for loc in regionlist:
+                    timeseries[lineage + '_' + loc] = first_diff[lineage + '_' + loc]
 
             # second diff
             if False in adf_result:
                 second_diff = first_diff.diff().dropna()
                 adf_result = adfullertest(second_diff, lineagelist, alpha)
+                VARdiff[count] = 'second'
+                # update timeseries
+                for loc in regionlist:
+                    timeseries[lineage + '_' + loc] = second_diff[lineage + '_' + loc]
 
+        count+=1
 
-    return timeseries, lineageVECM, lineageVAR
+    return timeseries, lineageVECM, lineageVAR, VARdiff
 
 
 def checkdistribution(timeseries, lineage, alpha):
@@ -127,7 +141,7 @@ def adfullertest(timeseries, lineage, alpha):
 
     adf_result = []
     filename = str(lineage) + '_log.txt'
-    for name, col in data.iteritems():
+    for name, col in timeseries.iteritems():
         stat = adfuller(col, autolag ="AIC")
         out = {'test_statistic':round(stat[0], 4), 'pvalue':round(stat[1], 4), 'n_lags':round(stat[2], 4), 'n_obs':stat[3]}
         p_value = out['pvalue']
