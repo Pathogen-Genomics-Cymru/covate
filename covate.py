@@ -3,6 +3,7 @@
 import argparse
 from build_time_series import buildseries
 from stats_tests import runtests
+from build_model import buildmodel
 
 def main():
 
@@ -26,7 +27,8 @@ def main():
     timeperiod = args.timeperiod
 
     countbydate, lineagecommon, region_list = buildseries(metadata, regions, adm, lineagetype, timeperiod)
-    runtests(countbydate, lineagecommon, region_list)
+    timeseries, lineageVECM, lineageVAR, VARdiff = runtests(countbydate, lineagecommon, region_list)
+    buildmodel(timeseries, lineageVECM, lineageVAR, VARdiff, lineagecommon, region_list)
 
 if __name__ == '__main__':
     main()
