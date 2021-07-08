@@ -97,6 +97,7 @@ def plotautocorr(timeseries, lineage, maxlag):
         plot_acf(col, lags=maxlag)
         plt.title('ACF for ' + str(name))
         plt.savefig(name + '_ACF.png')
+        plt.clf()
 
 
 def grangercausality(timeseries, lineage, regionlist, maxlag, alpha):
