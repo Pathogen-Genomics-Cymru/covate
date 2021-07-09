@@ -137,7 +137,7 @@ def cointegration(timeseries, lineage, regionlist, maxlag, determ):
     data = timeseries.filter(like=lineage)
     data.reset_index(drop=True, inplace=True)
     filename = str(lineage) + '_log.txt'
-    appendline(filename, 'Lags with Cointegration')
+    appendline(filename, 'Lags with Cointegration for ' + str(determ))
     for lag in range(maxlag):
         d = {'0.90':0, '0.95':1, '0.99':2}
 
@@ -147,7 +147,6 @@ def cointegration(timeseries, lineage, regionlist, maxlag, determ):
 
         for col, trace, cvt in zip(data.columns, out_traces, out_cvts):
             if trace > cvt:
-                appendline(filename, 'Lags with Cointegration for ' + str(determ))
                 appendline(filename, str(col) + ' lag= ' + str(lag))
                 if determ == 0:
                     runVECM = 'co'
