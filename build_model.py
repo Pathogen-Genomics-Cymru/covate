@@ -3,17 +3,16 @@ from statsmodels.tsa.api import VAR
 import pandas as pd
 import matplotlib.pyplot as plt
 
-def buildmodel(timeseries, lineageVECM, lineageVAR, VARdiff, lineagelist, regionlist):
+def buildmodel(timeseries, lineageVECM, VECMdeterm, lineageVAR, VARdiff, regionlist):
 
     nsteps=14
 
-    for lineage in lineagelist:
-        if lineage in lineageVECM:
+    for lineage, determ in zip(lineageVECM, VECMdeterm):
 
-            vectorErrorCorr(timeseries, lineage, regionlist, nsteps)
+        vectorErrorCorr(timeseries, lineage, determ, regionlist, nsteps)
 
 
-def vectorErrorCorr(timeseries, lineage, regionlist, nsteps):
+def vectorErrorCorr(timeseries, lineage, determ, regionlist, nsteps):
 
     data = timeseries.filter(like=lineage)
     data = data.asfreq('d')
@@ -21,7 +20,7 @@ def vectorErrorCorr(timeseries, lineage, regionlist, nsteps):
     nobs = nsteps
     X_train, X_test = data[0:-nobs], data[-nobs:]
 
-    vecm = VECM(endog = X_train, k_ar_diff = 7, coint_rank = 2, deterministic = 'ci')
+    vecm = VECM(endog = X_train, k_ar_diff = 3, coint_rank = 1, deterministic = determ)
 
     vecm_fit = vecm.fit()
     vecm_fit.predict(steps=nsteps)

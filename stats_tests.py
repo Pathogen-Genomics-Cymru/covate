@@ -9,10 +9,11 @@ from statsmodels.graphics.tsaplots import plot_acf
 
 def runtests(timeseries, lineagelist, regionlist):
 
-    maxlag = 30
+    maxlag = 14
     alpha = 0.05
 
     lineageVECM = []
+    VECMdeterm = []
     lineageVAR = []
     VARdiff = []
 
@@ -25,10 +26,21 @@ def runtests(timeseries, lineagelist, regionlist):
 
         grangercausality(timeseries, lineage, regionlist, maxlag, alpha)
 
-        runVECM = cointegration(timeseries, lineage, regionlist, maxlag)
+        # record deterministic terms for cointegration
+        VECMdeterm.insert(count, '')
+
+        # first check cointegration for constant term and linear trend
+        for determ in range(0, 2):
+            runVECM = cointegration(timeseries, lineage, regionlist, maxlag, determ)
+            VECMdeterm[count] += str(runVECM)
+
+        # if no constant or linear determ then check cointegration for no determ
+        if not VECMdeterm[count]:
+
+            runVECM = cointegration(timeseries, lineage, regionlist, maxlag, -1)
 
         # if lineage has cointegration, add to list of lineages for VECM
-        if runVECM:
+        if VECMdeterm[count]:
 
             lineageVECM.append(lineage)
 
@@ -64,7 +76,7 @@ def runtests(timeseries, lineagelist, regionlist):
 
         count+=1
 
-    return timeseries, lineageVECM, lineageVAR, VARdiff
+    return timeseries, lineageVECM, VECMdeterm, lineageVAR, VARdiff
 
 
 def checkdistribution(timeseries, lineage, alpha):
@@ -117,22 +129,32 @@ def grangercausality(timeseries, lineage, regionlist, maxlag, alpha):
             appendline(filename, 'Granger causality test for ' + str(loc2) +  '-> ' + str(loc1) + ' failed')
 
 
-def cointegration(timeseries, lineage, regionlist, maxlag):
+def cointegration(timeseries, lineage, regionlist, maxlag, determ):
     """Perform Johanson's Cointegration Test"""
+
+    runVECM = ''
 
     data = timeseries.filter(like=lineage)
     data.reset_index(drop=True, inplace=True)
     filename = str(lineage) + '_log.txt'
     appendline(filename, 'Lags with Cointegration')
     for lag in range(maxlag):
-        out = coint_johansen(data, -1, lag)
         d = {'0.90':0, '0.95':1, '0.99':2}
-        traces = out.lr1
-        cvts = out.cvt[:, d[str(0.95)]]
-        for col, trace, cvt in zip(data.columns, traces, cvts):
+
+        out = coint_johansen(data, determ, lag)
+        out_traces = out.lr1
+        out_cvts = out.cvt[:, d[str(0.95)]]
+
+        for col, trace, cvt in zip(data.columns, out_traces, out_cvts):
             if trace > cvt:
-                appendline(filename, str(col) + ' lag= ' + str(lag)) 
-                runVECM = True
+                appendline(filename, 'Lags with Cointegration for ' + str(determ))
+                appendline(filename, str(col) + ' lag= ' + str(lag))
+                if determ == 0:
+                    runVECM = 'co'
+                elif determ == 1:
+                    runVECM = 'lo'
+                elif determ == -1:
+                    runVECM = 'nc'
 
     return runVECM
 
