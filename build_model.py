@@ -1,4 +1,4 @@
-from statsmodels.tsa.vector_ar.vecm import VECM
+from statsmodels.tsa.vector_ar.vecm import VECM, select_coint_rank
 from statsmodels.tsa.api import VAR
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -20,7 +20,13 @@ def vectorErrorCorr(timeseries, lineage, determ, regionlist, nsteps):
     nobs = nsteps
     X_train, X_test = data[0:-nobs], data[-nobs:]
 
-    vecm = VECM(endog = X_train, k_ar_diff = 3, coint_rank = 1, deterministic = determ)
+    varmodel = VAR(endog=X_train)
+    lagorder = varmodel.select_order(14, trend='c')
+    lag = int(lagorder.aic) - 1
+
+    vecm_rank = select_coint_rank(X_train, det_order = 1, k_ar_diff = lag, method = 'trace', signif=0.05)
+
+    vecm = VECM(endog = X_train, k_ar_diff = lag, coint_rank = vecm_rank.rank, deterministic = determ)
 
     vecm_fit = vecm.fit()
     vecm_fit.predict(steps=nsteps)
