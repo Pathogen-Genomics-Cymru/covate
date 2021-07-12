@@ -2,6 +2,7 @@ from statsmodels.tsa.vector_ar.vecm import VECM, select_coint_rank
 from statsmodels.tsa.api import VAR
 import pandas as pd
 import matplotlib.pyplot as plt
+from utils import appendline
 
 def buildmodel(timeseries, lineageVECM, VECMdeterm, lineageVAR, VARdiff, regionlist):
 
@@ -34,6 +35,11 @@ def vectorErrorCorr(timeseries, lineage, determ, regionlist, nsteps):
     forecast, lower, upper = vecm_fit.predict(nsteps, 0.05)
 
     pred = (pd.DataFrame(forecast.round(0), index=X_test.index, columns=X_test.columns))
+
+    filename = str(lineage) + '_log.txt'
+    appendline(filename, lagorder.summary().as_text())
+    appendline(filename, vecm_rank.summary().as_text())
+    appendline(filename, vecm_fit.summary().as_text())
 
     for region in regionlist:
         plt.plot(pred[lineage + '_' + region], color='r', label='prediction')
