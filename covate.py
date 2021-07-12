@@ -27,8 +27,7 @@ def main():
     timeperiod = args.timeperiod
 
     countbydate, lineagecommon, region_list = buildseries(metadata, regions, adm, lineagetype, timeperiod)
-    timeseries, lineageVECM, VECMdeterm, lineageVAR, VARdiff = runtests(countbydate, lineagecommon, region_list)
-    buildmodel(timeseries, lineageVECM, VECMdeterm, lineageVAR, VARdiff, region_list)
+    buildmodel(countbydate, lineagecommon, region_list)
 
 if __name__ == '__main__':
     main()
