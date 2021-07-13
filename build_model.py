@@ -20,13 +20,10 @@ def buildmodel(timeseries, lineagelist, regionlist):
         filename = str(lineage) + '_log.txt'
 
         # filter timeseries by lineage
-        data = timeseries.filter(like=lineage)
+        X_train = timeseries.filter(like=lineage)
 
         # set index freq
-        data = data.asfreq('d')
-
-        # build training and testing datasets
-        X_train, X_test = data[0:-nsteps], data[-nsteps:]
+        X_train = X_train.asfreq('d')
 
         # get basic information on timeseries
         checkdistribution(X_train, lineage, alpha, filename)
@@ -60,7 +57,7 @@ def buildmodel(timeseries, lineagelist, regionlist):
 
             appendline(filename, 'Lineage has cointegration => Run VECM')
 
-            vectorErrorCorr(X_train, X_test, lineage, VECMdeterm, lag, coint_count, regionlist, nsteps, alpha, filename)
+            vectorErrorCorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nsteps, alpha, filename)
 
         # else check for stationarity and difference then run VAR
         else:
@@ -194,12 +191,43 @@ def adfullertest(X_train, lineage, alpha, filename):
     return adf_result
 
 
-def vectorErrorCorr(X_train, X_test, lineage, VECMdeterm, lag, coint_count, regionlist, nsteps, alpha, filename):
+def vectorErrorCorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nsteps, alpha, filename):
     """ Build VECM model"""
 
     # minus 1 from lag for VECM
     if lag != 0:
         lag = int(lag) - 1
+
+    # predict on entire dataset
+    vecm = VECM(endog = X_train, k_ar_diff = lag, coint_rank = coint_count, deterministic = VECMdeterm)
+
+    vecm_fit = vecm.fit()
+    vecm_fit.predict(steps=nsteps)
+
+    forecast, lower, upper = vecm_fit.predict(nsteps, alpha)
+
+    # get last index from X_train and build index for prediction
+    idx = pd.date_range(X_train.index[-1], periods=nsteps+1, freq='d')[1:] 
+
+    pred = (pd.DataFrame(forecast.round(0), columns=X_train.columns, index=idx))
+
+    # cast negative predictions to zero
+    pred[pred<0] = 0
+
+    appendline(filename, vecm_fit.summary().as_text())
+
+    for region in regionlist:
+        plt.plot(pred[lineage + '_' + region], color='r', label='prediction')
+        plt.title('VECM Predicted Time series for ' +  lineage + ' for ' + region)
+        plt.legend(loc="upper left")
+        plt.locator_params(axis="y", integer=True, tight=True)
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.savefig(lineage + '_' + region + '_VECM.png')
+        plt.clf()
+
+    # build testing dataset for validation
+    X_train, X_test = X_train[0:-nsteps], X_train[-nsteps:]
 
     vecm = VECM(endog = X_train, k_ar_diff = lag, coint_rank = coint_count, deterministic = VECMdeterm)
 
@@ -210,15 +238,16 @@ def vectorErrorCorr(X_train, X_test, lineage, VECMdeterm, lag, coint_count, regi
 
     pred = (pd.DataFrame(forecast.round(0), index=X_test.index, columns=X_test.columns))
 
-    appendline(filename, vecm_fit.summary().as_text())
+    # cast negative predictions to 0
+    pred[pred<0] = 0
 
     for region in regionlist:
         plt.plot(pred[lineage + '_' + region], color='r', label='prediction')
         plt.plot(X_test[lineage + '_' + region], color='b',  label='actual')
-        plt.title('VECM Predicted and Actual Time series for ' +  lineage + ' for ' + region)
+        plt.title('Validation: VECM Predicted and Actual Time series for ' +  lineage + ' for ' + region)
         plt.legend(loc="upper left")
         plt.locator_params(axis="y", integer=True, tight=True)
         plt.xticks(rotation=45)
         plt.tight_layout()
-        plt.savefig(lineage + '_' + region + '_VECM.png')
+        plt.savefig(lineage + '_' + region + '_VECM_validation.png')
         plt.clf()
