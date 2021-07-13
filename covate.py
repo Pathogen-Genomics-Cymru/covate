@@ -2,7 +2,6 @@
 
 import argparse
 from build_time_series import buildseries
-from stats_tests import runtests
 from build_model import buildmodel
 
 def main():
