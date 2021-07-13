@@ -62,28 +62,9 @@ def buildmodel(timeseries, lineagelist, regionlist):
         # else check for stationarity and difference then run VAR
         else:
 
-            adf_result = adfullertest(X_train, lineagelist, alpha, filename)
+            appendline(filename, 'Lineage has no cointegration => Run VAR')
 
-            # record whether no diff, first diff or second diff
-            VARdiff = 'none'
-
-            # first diff and recalculate ADF
-            if False in adf_result:
-
-                X_train = X_train.diff().dropna()
-
-                adf_result = adfullertest(X_train, lineagelist, alpha, filename)
-
-                VARdiff = 'first'
-
-            # second diff
-            if False in adf_result:
-
-                X_train = X_train.diff().dropna()
-
-                adf_result = adfullertest(X_train, lineagelist, alpha, filename)
-
-                VARdiff = 'second'
+            vectorAutoReg(X_train, lineage, lag, regionlist, nsteps, alpha, filename)
 
 
 def checkdistribution(X_train, lineage, alpha, filename):
@@ -251,3 +232,150 @@ def vectorErrorCorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, 
         plt.tight_layout()
         plt.savefig(lineage + '_' + region + '_VECM_validation.png')
         plt.clf()
+
+
+def vectorAutoReg(X_train, lineage, lag, regionlist, nsteps, alpha, filename):
+    """ Build VAR model"""
+
+    # predict on entire dataset
+    Xtrain = X_train.copy()
+
+    # check for stationarity and difference
+
+    adf_result = adfullertest(Xtrain, lineage, alpha, filename)
+
+    # record whether no diff, first diff or second diff
+
+    VARdiff = 'none'
+
+    # first diff and recalculate ADF
+    if False in adf_result:
+
+        Xtrain = Xtrain.diff().dropna()
+
+        adf_result = adfullertest(Xtrain, lineage, alpha, filename)
+
+        VARdiff = 'first'
+
+        appendline(filename, 'Series has been first differenced')
+
+    # second diff
+    if False in adf_result:
+
+         Xtrain = Xtrain.diff().dropna()
+
+         adf_result = adfullertest(Xtrain, lineage, alpha, filename)
+
+         VARdiff = 'second'
+
+         appendline(filename, 'Series has been second differenced')
+
+    # build var
+    varm = VAR(endog = Xtrain)
+
+    varm_fit = varm.fit(maxlags=lag)
+
+    lag_order = varm_fit.k_ar
+
+    forecast_input = Xtrain.values[-lag_order:]
+
+    forecast = varm_fit.forecast(y=forecast_input, steps=nsteps)
+
+    # get last index from X_train and build index for prediction
+    idx = pd.date_range(Xtrain.index[-1], periods=nsteps+1, freq='d')[1:]
+
+    pred = pd.DataFrame(forecast.round(0), index=idx, columns=Xtrain.columns + '_diff')
+
+    # undo difference
+    fc = pred.copy()
+    columns = Xtrain.columns
+    for col in columns:
+        if VARdiff == 'first':
+            fc[str(col)] = Xtrain[col].iloc[-1] + fc[str(col)+'_diff'].cumsum()
+        elif VARdiff == 'second':
+            fc[str(col)+'_1d'] = (Xtrain[col].iloc[-1] - Xtrain[col].iloc[-2]) + fc[str(col)+'_diff'].cumsum()
+            fc[str(col)] = Xtrain[col].iloc[-1] + fc[str(col)+'_1d'].cumsum()
+
+    # cast negative predictions to 0
+    fc[fc<0] = 0
+
+    for region in regionlist:
+        plt.plot(fc[lineage + '_' + region], color='r', label='prediction')
+        plt.title('VAR Predicted Time series for ' +  lineage + ' for ' + region)
+        plt.legend(loc="upper left")
+        plt.locator_params(axis="y", integer=True, tight=True)
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.savefig(lineage + '_' + region + '_VAR.png')
+        plt.clf()
+
+    # build testing dataset for validation
+
+    X_train, X_test = X_train[0:-nsteps], X_train[-nsteps:]
+
+    # check for stationarity and difference
+
+    adf_result = adfullertest(X_train, lineage, alpha, filename)
+
+    # record whether no diff, first diff or second diff
+
+    VARdiff = 'none'
+
+    # first diff and recalculate ADF
+    if False in adf_result:
+
+        X_train = X_train.diff().dropna()
+
+        adf_result = adfullertest(X_train, lineage, alpha, filename)
+
+        VARdiff = 'first'
+
+        appendline(filename, 'Series has been first differenced')
+
+    # second diff
+    if False in adf_result:
+
+         X_train = X_train.diff().dropna()
+
+         adf_result = adfullertest(X_train, lineage, alpha, filename)
+
+         VARdiff = 'second'
+
+         appendline(filename, 'Series has been second differenced')
+
+    # build var
+    varm = VAR(endog = X_train)
+
+    varm_fit = varm.fit(maxlags=lag)
+
+    lag_order = varm_fit.k_ar
+
+    forecast_input = X_train.values[-lag_order:]
+
+    forecast = varm_fit.forecast(y=forecast_input, steps=nsteps)
+    pred = pd.DataFrame(forecast.round(0), index=X_test.index, columns=X_test.columns + '_diff')
+
+    # undo difference
+    fc = pred.copy()
+    columns = X_train.columns
+    for col in columns:
+        if VARdiff == 'first':
+            fc[str(col)] = X_train[col].iloc[-1] + fc[str(col)+'_diff'].cumsum()
+        elif VARdiff == 'second':
+            fc[str(col)+'_1d'] = (X_train[col].iloc[-1] - X_train[col].iloc[-2]) + fc[str(col)+'_diff'].cumsum()
+            fc[str(col)] = X_train[col].iloc[-1] + fc[str(col)+'_1d'].cumsum()
+
+    # cast negative predictions to 0
+    fc[fc<0] = 0
+
+    for region in regionlist:
+        plt.plot(fc[lineage + '_' + region], color='r', label='prediction')
+        plt.plot(X_test[lineage + '_' + region], color='b',  label='actual')
+        plt.title('Validation: VAR Predicted and Actual Time series for ' +  lineage + ' for ' + region)
+        plt.legend(loc="upper left")
+        plt.locator_params(axis="y", integer=True, tight=True)
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.savefig(lineage + '_' + region + '_VAR_validation.png')
+        plt.clf()
+
