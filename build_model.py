@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 import scipy.stats as stats
 import matplotlib.pyplot as plt
-from utils import appendline, pairwise
+from utils import appendline, pairwise, getdate
 
 def buildmodel(timeseries, lineagelist, regionlist):
 
@@ -17,7 +17,7 @@ def buildmodel(timeseries, lineagelist, regionlist):
     for lineage in lineagelist:
 
         # set log file
-        filename = str(lineage) + '_log.txt'
+        filename = str(getdate()) + '/' + lineage + '/logs/' + lineage + '_log.txt'
 
         # filter timeseries by lineage
         X_train = timeseries.filter(like=lineage)
@@ -91,11 +91,11 @@ def plotautocorr(X_train, lineage, maxlag):
     for name, col in X_train.iteritems():
         plot_acf(col, lags=maxlag)
         plt.title('ACF for ' + str(name))
-        plt.savefig(name + '_ACF.png')
+        plt.savefig(str(getdate()) + '/' + lineage + '/additional-plots/' + name + '_ACF.png')
         plt.clf()
 
 
-def grangercausality(X_train,  lineage, regionlist, maxlag, alpha, filename):
+def grangercausality(X_train, lineage, regionlist, maxlag, alpha, filename):
     """Check for Granger Causality"""
 
     test = "ssr_chi2test"
@@ -204,7 +204,7 @@ def vectorErrorCorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, 
         plt.locator_params(axis="y", integer=True, tight=True)
         plt.xticks(rotation=45)
         plt.tight_layout()
-        plt.savefig(lineage + '_' + region + '_VECM.png')
+        plt.savefig(str(getdate()) + '/' + lineage + '/prediction/' + lineage + '_' + region + '_VECM.png')
         plt.clf()
 
     # build testing dataset for validation
@@ -230,7 +230,7 @@ def vectorErrorCorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, 
         plt.locator_params(axis="y", integer=True, tight=True)
         plt.xticks(rotation=45)
         plt.tight_layout()
-        plt.savefig(lineage + '_' + region + '_VECM_validation.png')
+        plt.savefig(str(getdate()) + '/' + lineage + '/validation/' + lineage + '_' + region + '_VECM_validation.png')
         plt.clf()
 
 
@@ -306,7 +306,7 @@ def vectorAutoReg(X_train, lineage, lag, regionlist, nsteps, alpha, filename):
         plt.locator_params(axis="y", integer=True, tight=True)
         plt.xticks(rotation=45)
         plt.tight_layout()
-        plt.savefig(lineage + '_' + region + '_VAR.png')
+        plt.savefig(str(getdate()) + '/' + lineage + '/prediction/' + lineage + '_' + region + '_VAR.png')
         plt.clf()
 
     # build testing dataset for validation
@@ -376,6 +376,6 @@ def vectorAutoReg(X_train, lineage, lag, regionlist, nsteps, alpha, filename):
         plt.locator_params(axis="y", integer=True, tight=True)
         plt.xticks(rotation=45)
         plt.tight_layout()
-        plt.savefig(lineage + '_' + region + '_VAR_validation.png')
+        plt.savefig(str(getdate()) + '/' + lineage + '/validation/' + lineage + '_' + region + '_VAR_validation.png')
         plt.clf()
 

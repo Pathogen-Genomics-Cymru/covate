@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from dateutil.relativedelta import relativedelta
+from utils import getdate, createoutputdir
 
 def buildseries(metadata, regions, adm, lineagetype, timeperiod):
 
@@ -48,8 +49,12 @@ def buildseries(metadata, regions, adm, lineagetype, timeperiod):
         else:
             lineagecommon.append(lineage)
 
+    # create output directory
+    for lineage in lineagecommon:
+        createoutputdir(lineage)
+
     # save raw time series
-    countbydate.to_csv('timeseriesraw.csv', sep=',')
+    countbydate.to_csv(str(getdate()) + '/timeseriesraw.csv', sep=',')
 
     # pad time series
     countbydate = padseries(countbydate)
@@ -89,7 +94,7 @@ def plotseries(dataframe, lineagelist, regionlist):
         ax1.set_ylabel('Number of cases')
         ax2.title.set_text('Lag plot for ' + lineage + ' for ' + str(regionlist))
         plt.tight_layout()
-        plt.savefig(lineage + '.png')
+        plt.savefig(str(getdate()) + '/' + lineage + '/additional-plots/' + lineage + '_timeseries.png')
 
 
 def padseries(dataframe):
