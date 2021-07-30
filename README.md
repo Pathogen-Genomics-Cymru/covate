@@ -3,8 +3,8 @@ Covate forecasts time series for lineages that are common to a specified list of
 
 ## Usage ##
 ```
-usage: covate.py [-h] -i METADATA [-r REGIONS] [-a ADM] [-l LINEAGETYPE]
-                 [-t TIMEPERIOD]
+usage: covate [-h] -i METADATA -o OUTPUT [-r REGIONS] [-a ADM]
+              [-l LINEAGETYPE] [-t TIMEPERIOD]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -12,6 +12,8 @@ optional arguments:
                         Input metadata csv, expects columns:
                         central_sample_id, adm1/adm2, sample_date,
                         lineage/uk_lineage
+  -o OUTPUT, --output-dir OUTPUT
+                        Output directory for the results
   -r REGIONS, --region-list REGIONS
                         Input list of regions to compare, e.g. UK-WLS, UK-ENG
   -a ADM, --adm ADM     Select either adm1 or adm2
@@ -23,6 +25,7 @@ optional arguments:
 
 ### Arguments ###
 * **--input-csv** <br /> Input metadata csv. The following columns are required: **central_sample_id, adm1/adm2, sample_date, lineage/uk_lineage**
+* **--output-dir** <br /> Output directory for results
 * **--region-list** <br /> Input list of regions to compare. Default **UK-WLS, UK-ENG**
 * **--adm** <br /> Select adm the regions belong to (adm1 or adm2). Default **adm1**
 * **--lineage-type** <br /> Select whether to compare global or uk lineages (lineage or uk_lineage). Default **uk_lineage**
