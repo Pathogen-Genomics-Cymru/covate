@@ -45,10 +45,8 @@ def getdate():
     return out_time
 
 
-def createoutputdir(lineage):
+def createoutputdir(lineage, output):
     """create output directory structure"""
-
-    script_dir = os.path.dirname(__file__)
 
     out_time = getdate()
 
@@ -56,7 +54,7 @@ def createoutputdir(lineage):
 
     for elem in out_list:
         out_dir = os.path.join(out_time, lineage ,elem)
-        results_dir = os.path.join(script_dir, out_dir)
+        results_dir = os.path.join(output, out_dir)
         if not os.path.isdir(results_dir):
             os.makedirs(results_dir)
 

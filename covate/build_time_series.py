@@ -3,9 +3,10 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from dateutil.relativedelta import relativedelta
-from utils import getdate, createoutputdir
+from .utils import getdate, createoutputdir
 
-def buildseries(metadata, regions, adm, lineagetype, timeperiod):
+def buildseries(metadata, regions, adm, lineagetype, timeperiod, output):
+    """ Build the time series for lineages common to specified regions"""
 
     # load metadata and index by date
     df = pd.read_csv(metadata, usecols=['central_sample_id', adm, 'sample_date', lineagetype], parse_dates=['sample_date'], index_col='sample_date', dayfirst=True)
@@ -51,21 +52,22 @@ def buildseries(metadata, regions, adm, lineagetype, timeperiod):
 
     # create output directory
     for lineage in lineagecommon:
-        createoutputdir(lineage)
+        createoutputdir(lineage, output)
 
     # save raw time series
-    countbydate.to_csv(str(getdate()) + '/timeseriesraw.csv', sep=',')
+    countbydate.to_csv(output + '/' +  str(getdate()) + '/timeseriesraw.csv', sep=',')
 
     # pad time series
     countbydate = padseries(countbydate)
 
     # plot time series and lag plot
-    plotseries(countbydate, lineagecommon, region_list)
+    plotseries(countbydate, lineagecommon, region_list, output)
 
     return countbydate, lineagecommon, region_list
 
 
 def gettimeperiod(dataframe, timeperiod):
+    """Extract time period from metadata specified by --time-period"""
 
     # get the most recent date in metadata
     enddate = dataframe.index.max()
@@ -79,7 +81,8 @@ def gettimeperiod(dataframe, timeperiod):
     return dataframe
 
 
-def plotseries(dataframe, lineagelist, regionlist):
+def plotseries(dataframe, lineagelist, regionlist, output):
+    """Plot the time series and lag plots"""
 
     colors = ['r', 'g', 'b', 'm', 'c', 'y']
 
@@ -94,10 +97,11 @@ def plotseries(dataframe, lineagelist, regionlist):
         ax1.set_ylabel('Number of cases')
         ax2.title.set_text('Lag plot for ' + lineage + ' for ' + str(regionlist))
         plt.tight_layout()
-        plt.savefig(str(getdate()) + '/' + lineage + '/additional-plots/' + lineage + '_timeseries.png')
+        plt.savefig(output + '/' + str(getdate()) + '/' + lineage + '/additional-plots/' + lineage + '_timeseries.png')
 
 
 def padseries(dataframe):
+    """Pad the time series"""
 
     dataframe = dataframe.replace(0, np.nan)
     dataframe = dataframe.fillna(method='pad')

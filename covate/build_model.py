@@ -6,9 +6,10 @@ import pandas as pd
 import numpy as np
 import scipy.stats as stats
 import matplotlib.pyplot as plt
-from utils import appendline, pairwise, getdate
+from .utils import appendline, pairwise, getdate
 
-def buildmodel(timeseries, lineagelist, regionlist):
+def buildmodel(timeseries, lineagelist, regionlist, output):
+    """ Run stats tests for each lineage and select model and parameters"""
 
     maxlag=14
     nsteps=14
@@ -17,7 +18,7 @@ def buildmodel(timeseries, lineagelist, regionlist):
     for lineage in lineagelist:
 
         # set log file
-        filename = str(getdate()) + '/' + lineage + '/logs/' + lineage + '_log.txt'
+        filename = output + '/' + str(getdate()) + '/' + lineage + '/logs/' + lineage + '_log.txt'
 
         # filter timeseries by lineage
         X_train = timeseries.filter(like=lineage)
@@ -29,7 +30,7 @@ def buildmodel(timeseries, lineagelist, regionlist):
         checkdistribution(X_train, lineage, alpha, filename)
 
         # plot the autocorrelation
-        plotautocorr(X_train, lineage, maxlag)
+        plotautocorr(X_train, lineage, maxlag, output)
 
         # check for granger causality
         grangercausality(X_train, lineage, regionlist, maxlag, alpha, filename)
@@ -57,14 +58,14 @@ def buildmodel(timeseries, lineagelist, regionlist):
 
             appendline(filename, 'Lineage has cointegration => Run VECM')
 
-            vectorErrorCorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nsteps, alpha, filename)
+            vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nsteps, alpha, filename, output)
 
         # else check for stationarity and difference then run VAR
         else:
 
             appendline(filename, 'Lineage has no cointegration => Run VAR')
 
-            vectorAutoReg(X_train, lineage, lag, regionlist, nsteps, alpha, filename)
+            vecautoreg(X_train, lineage, lag, regionlist, nsteps, alpha, filename, output)
 
 
 def checkdistribution(X_train, lineage, alpha, filename):
@@ -85,13 +86,13 @@ def checkdistribution(X_train, lineage, alpha, filename):
         appendline(filename, 'Skewness = ' + str(round(stat_skew, 4)))
 
 
-def plotautocorr(X_train, lineage, maxlag):
+def plotautocorr(X_train, lineage, maxlag, output):
     """Plot autocorrelation"""
 
     for name, col in X_train.iteritems():
         plot_acf(col, lags=maxlag)
         plt.title('ACF for ' + str(name))
-        plt.savefig(str(getdate()) + '/' + lineage + '/additional-plots/' + name + '_ACF.png')
+        plt.savefig(output + '/' + str(getdate()) + '/' + lineage + '/additional-plots/' + name + '_ACF.png')
         plt.clf()
 
 
@@ -172,7 +173,7 @@ def adfullertest(X_train, lineage, alpha, filename):
     return adf_result
 
 
-def vectorErrorCorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nsteps, alpha, filename):
+def vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nsteps, alpha, filename, output):
     """ Build VECM model"""
 
     # minus 1 from lag for VECM
@@ -204,7 +205,7 @@ def vectorErrorCorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, 
         plt.locator_params(axis="y", integer=True, tight=True)
         plt.xticks(rotation=45)
         plt.tight_layout()
-        plt.savefig(str(getdate()) + '/' + lineage + '/prediction/' + lineage + '_' + region + '_VECM.png')
+        plt.savefig(output + '/' + str(getdate()) + '/' + lineage + '/prediction/' + lineage + '_' + region + '_VECM.png')
         plt.clf()
 
     # build testing dataset for validation
@@ -230,11 +231,11 @@ def vectorErrorCorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, 
         plt.locator_params(axis="y", integer=True, tight=True)
         plt.xticks(rotation=45)
         plt.tight_layout()
-        plt.savefig(str(getdate()) + '/' + lineage + '/validation/' + lineage + '_' + region + '_VECM_validation.png')
+        plt.savefig(output + '/' + str(getdate()) + '/' + lineage + '/validation/' + lineage + '_' + region + '_VECM_validation.png')
         plt.clf()
 
 
-def vectorAutoReg(X_train, lineage, lag, regionlist, nsteps, alpha, filename):
+def vectautoreg(X_train, lineage, lag, regionlist, nsteps, alpha, filename, output):
     """ Build VAR model"""
 
     # predict on entire dataset
@@ -306,7 +307,7 @@ def vectorAutoReg(X_train, lineage, lag, regionlist, nsteps, alpha, filename):
         plt.locator_params(axis="y", integer=True, tight=True)
         plt.xticks(rotation=45)
         plt.tight_layout()
-        plt.savefig(str(getdate()) + '/' + lineage + '/prediction/' + lineage + '_' + region + '_VAR.png')
+        plt.savefig(output + '/' + str(getdate()) + '/' + lineage + '/prediction/' + lineage + '_' + region + '_VAR.png')
         plt.clf()
 
     # build testing dataset for validation
@@ -376,6 +377,6 @@ def vectorAutoReg(X_train, lineage, lag, regionlist, nsteps, alpha, filename):
         plt.locator_params(axis="y", integer=True, tight=True)
         plt.xticks(rotation=45)
         plt.tight_layout()
-        plt.savefig(str(getdate()) + '/' + lineage + '/validation/' + lineage + '_' + region + '_VAR_validation.png')
+        plt.savefig(output + '/' + str(getdate()) + '/' + lineage + '/validation/' + lineage + '_' + region + '_VAR_validation.png')
         plt.clf()
 
