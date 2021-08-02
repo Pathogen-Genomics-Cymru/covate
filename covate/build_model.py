@@ -1,3 +1,4 @@
+import os
 from statsmodels.tsa.vector_ar.vecm import VECM, select_coint_rank, coint_johansen
 from statsmodels.tsa.api import VAR
 from statsmodels.tsa.stattools import grangercausalitytests, adfuller
@@ -18,7 +19,8 @@ def buildmodel(timeseries, lineagelist, regionlist, output):
     for lineage in lineagelist:
 
         # set log file
-        filename = output + '/' + str(getdate()) + '/' + lineage + '/logs/' + lineage + '_log.txt'
+        path = os.path.join(output, str(getdate()), lineage, 'logs')
+        filename = path + '/' + lineage + '_log.txt'
 
         # filter timeseries by lineage
         X_train = timeseries.filter(like=lineage)
@@ -89,10 +91,12 @@ def checkdistribution(X_train, lineage, alpha, filename):
 def plotautocorr(X_train, lineage, maxlag, output):
     """Plot autocorrelation"""
 
+    path = os.path.join(output, str(getdate()), lineage, 'additional-plots')
+
     for name, col in X_train.iteritems():
         plot_acf(col, lags=maxlag)
         plt.title('ACF for ' + str(name))
-        plt.savefig(output + '/' + str(getdate()) + '/' + lineage + '/additional-plots/' + name + '_ACF.png')
+        plt.savefig(path + '/' + name + '_ACF.png')
         plt.clf()
 
 
@@ -198,6 +202,8 @@ def vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nstep
 
     appendline(filename, vecm_fit.summary().as_text())
 
+    path = os.path.join(output, str(getdate()), lineage, 'prediction')
+
     for region in regionlist:
         plt.plot(pred[lineage + '_' + region], color='r', label='prediction')
         plt.title('VECM Predicted Time series for ' +  lineage + ' for ' + region)
@@ -205,7 +211,7 @@ def vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nstep
         plt.locator_params(axis="y", integer=True, tight=True)
         plt.xticks(rotation=45)
         plt.tight_layout()
-        plt.savefig(output + '/' + str(getdate()) + '/' + lineage + '/prediction/' + lineage + '_' + region + '_VECM.png')
+        plt.savefig(path + '/' + lineage + '_' + region + '_VECM.png')
         plt.clf()
 
     # build testing dataset for validation
@@ -223,6 +229,8 @@ def vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nstep
     # cast negative predictions to 0
     pred[pred<0] = 0
 
+    path = os.path.join(output, str(getdate()), lineage, 'validation')
+
     for region in regionlist:
         plt.plot(pred[lineage + '_' + region], color='r', label='prediction')
         plt.plot(X_test[lineage + '_' + region], color='b',  label='actual')
@@ -231,7 +239,7 @@ def vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nstep
         plt.locator_params(axis="y", integer=True, tight=True)
         plt.xticks(rotation=45)
         plt.tight_layout()
-        plt.savefig(output + '/' + str(getdate()) + '/' + lineage + '/validation/' + lineage + '_' + region + '_VECM_validation.png')
+        plt.savefig(path + '/' + lineage + '_' + region + '_VECM_validation.png')
         plt.clf()
 
 
@@ -300,6 +308,8 @@ def vectautoreg(X_train, lineage, lag, regionlist, nsteps, alpha, filename, outp
     # cast negative predictions to 0
     fc[fc<0] = 0
 
+    path = os.path.join(output, str(getdate()), lineage, 'prediction')
+
     for region in regionlist:
         plt.plot(fc[lineage + '_' + region], color='r', label='prediction')
         plt.title('VAR Predicted Time series for ' +  lineage + ' for ' + region)
@@ -307,7 +317,7 @@ def vectautoreg(X_train, lineage, lag, regionlist, nsteps, alpha, filename, outp
         plt.locator_params(axis="y", integer=True, tight=True)
         plt.xticks(rotation=45)
         plt.tight_layout()
-        plt.savefig(output + '/' + str(getdate()) + '/' + lineage + '/prediction/' + lineage + '_' + region + '_VAR.png')
+        plt.savefig(path + '/' + lineage + '_' + region + '_VAR.png')
         plt.clf()
 
     # build testing dataset for validation
@@ -369,6 +379,8 @@ def vectautoreg(X_train, lineage, lag, regionlist, nsteps, alpha, filename, outp
     # cast negative predictions to 0
     fc[fc<0] = 0
 
+    path = os.path.join(output, str(getdate()), lineage, 'validation')
+
     for region in regionlist:
         plt.plot(fc[lineage + '_' + region], color='r', label='prediction')
         plt.plot(X_test[lineage + '_' + region], color='b',  label='actual')
@@ -377,6 +389,6 @@ def vectautoreg(X_train, lineage, lag, regionlist, nsteps, alpha, filename, outp
         plt.locator_params(axis="y", integer=True, tight=True)
         plt.xticks(rotation=45)
         plt.tight_layout()
-        plt.savefig(output + '/' + str(getdate()) + '/' + lineage + '/validation/' + lineage + '_' + region + '_VAR_validation.png')
+        plt.savefig(path + '/' + lineage + '_' + region + '_VAR_validation.png')
         plt.clf()
 

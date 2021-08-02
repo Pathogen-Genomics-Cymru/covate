@@ -1,4 +1,5 @@
 import sys
+import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -55,7 +56,8 @@ def buildseries(metadata, regions, adm, lineagetype, timeperiod, output):
         createoutputdir(lineage, output)
 
     # save raw time series
-    countbydate.to_csv(output + '/' +  str(getdate()) + '/timeseriesraw.csv', sep=',')
+    path = os.path.join(output, str(getdate()))
+    countbydate.to_csv(path + '/timeseriesraw.csv', sep=',')
 
     # pad time series
     countbydate = padseries(countbydate)
@@ -89,6 +91,7 @@ def plotseries(dataframe, lineagelist, regionlist, output):
     ncolor = 0
     for lineage in lineagelist:
         fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(10,6))
+        path = os.path.join(output, str(getdate()), lineage, 'additional-plots')
         for region in regionlist:
             dataframe[lineage + '_' + region].plot(ax=ax1, c=colors[ncolor])
             pd.plotting.lag_plot(dataframe[lineage + '_' + region], c=colors[ncolor], ax=ax2)
@@ -97,7 +100,7 @@ def plotseries(dataframe, lineagelist, regionlist, output):
         ax1.set_ylabel('Number of cases')
         ax2.title.set_text('Lag plot for ' + lineage + ' for ' + str(regionlist))
         plt.tight_layout()
-        plt.savefig(output + '/' + str(getdate()) + '/' + lineage + '/additional-plots/' + lineage + '_timeseries.png')
+        plt.savefig(path + '/' + lineage + '_timeseries.png')
 
 
 def padseries(dataframe):
