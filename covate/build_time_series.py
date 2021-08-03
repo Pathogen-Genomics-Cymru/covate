@@ -60,7 +60,7 @@ def buildseries(metadata, regions, adm, lineagetype, timeperiod, output):
     countbydate.to_csv(path + '/timeseriesraw.csv', sep=',')
 
     # pad time series
-    countbydate = padseries(countbydate)
+    #countbydate = padseries(countbydate)
 
     # plot time series and lag plot
     plotseries(countbydate, lineagecommon, region_list, output)
@@ -88,8 +88,8 @@ def plotseries(dataframe, lineagelist, regionlist, output):
 
     colors = ['r', 'g', 'b', 'm', 'c', 'y']
 
-    ncolor = 0
     for lineage in lineagelist:
+        ncolor = 0
         fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(10,6))
         path = os.path.join(output, str(getdate()), lineage, 'additional-plots')
         for region in regionlist:
@@ -101,6 +101,8 @@ def plotseries(dataframe, lineagelist, regionlist, output):
         ax2.title.set_text('Lag plot for ' + lineage + ' for ' + str(regionlist))
         plt.tight_layout()
         plt.savefig(path + '/' + lineage + '_timeseries.png')
+        plt.clf()
+        plt.close(fig)
 
 
 def padseries(dataframe):
