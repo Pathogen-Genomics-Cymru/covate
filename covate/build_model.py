@@ -243,7 +243,7 @@ def vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nstep
         plt.clf()
 
 
-def vectautoreg(X_train, lineage, lag, regionlist, nsteps, alpha, filename, output):
+def vecautoreg(X_train, lineage, lag, regionlist, nsteps, alpha, filename, output):
     """ Build VAR model"""
 
     # predict on entire dataset
