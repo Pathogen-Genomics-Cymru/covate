@@ -44,10 +44,11 @@ def buildseries(metadata, regions, adm, lineagetype, timeperiod, output):
     lineagecommon = []
     numcountry = len(region_list)
     for lineage in lineagearr:
-        listbylineage = countbydate.columns.str.startswith(lineage).tolist()
+        lineagestr = str(lineage) + '_'
+        listbylineage = countbydate.columns.str.startswith(lineagestr).tolist()
         truecount = sum(listbylineage)
         if truecount < 2:
-            countbydate = countbydate.loc[:,~countbydate.columns.str.startswith(lineage)]
+            countbydate = countbydate.loc[:,~countbydate.columns.str.startswith(lineagestr)]
         else:
             lineagecommon.append(lineage)
 
