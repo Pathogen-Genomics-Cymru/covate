@@ -188,6 +188,12 @@ def vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nstep
     vecm = VECM(endog = X_train, k_ar_diff = lag, coint_rank = coint_count, deterministic = VECMdeterm)
 
     vecm_fit = vecm.fit()
+
+    try:
+        appendline(filename, vecm_fit.summary().as_text())
+    except IndexError:
+        appendline(filename, 'Failed to create VECM summary')
+
     vecm_fit.predict(steps=nsteps)
 
     forecast, lower, upper = vecm_fit.predict(nsteps, alpha)
@@ -199,8 +205,6 @@ def vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nstep
 
     # cast negative predictions to zero
     pred[pred<0] = 0
-
-    appendline(filename, vecm_fit.summary().as_text())
 
     path = os.path.join(output, str(getdate()), lineage, 'prediction')
 
