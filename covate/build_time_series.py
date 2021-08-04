@@ -73,7 +73,7 @@ def gettimeperiod(dataframe, timeperiod):
     """Extract time period from metadata specified by --time-period"""
 
     # get the most recent date in metadata
-    enddate = dataframe.index.max()
+    enddate = dataframe.index.max() - relativedelta(days=7)
 
     # select previous x months from most recent date
     startdate = enddate - relativedelta(months=+int(timeperiod))
