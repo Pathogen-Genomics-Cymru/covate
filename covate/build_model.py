@@ -1,4 +1,5 @@
 import os
+import statsmodels.tools.sm_exceptions as statserror
 from statsmodels.tsa.vector_ar.vecm import VECM, select_coint_rank, coint_johansen
 from statsmodels.tsa.api import VAR
 from statsmodels.tsa.stattools import grangercausalitytests, adfuller
@@ -35,7 +36,12 @@ def buildmodel(timeseries, lineagelist, regionlist, output):
         plotautocorr(X_train, lineage, maxlag, output)
 
         # check for granger causality
-        grangercausality(X_train, lineage, regionlist, maxlag, alpha, filename)
+        try:
+            for loc1, loc2 in pairwise(regionlist):
+                grangercausality(X_train, lineage, loc1, loc2, maxlag, alpha, filename)
+        except statserror.InfeasibleTestError:
+            appendline(filename, 'ERROR: Cannot run Granger causality test for ' + str(loc2) +  '-> ' + str(loc1))
+            continue
 
         # find lag order
         try:
@@ -116,20 +122,21 @@ def plotautocorr(X_train, lineage, maxlag, output):
         plt.clf()
 
 
-def grangercausality(X_train, lineage, regionlist, maxlag, alpha, filename):
+def grangercausality(X_train, lineage, loc1, loc2, maxlag, alpha, filename):
     """Check for Granger Causality"""
 
     test = "ssr_chi2test"
 
-    for loc1, loc2 in pairwise(regionlist):
-        data = pd.concat([X_train[lineage + '_' + loc1], X_train[lineage + '_' +  loc2]], axis=1)
-        try:
-            test_result = grangercausalitytests(data, maxlag=maxlag, verbose=False)
-            p_values = [test_result[lag+1][0][test][1:3] for lag in range(maxlag)]
-            min_p_value = min(p_values, key=lambda x: x[0])
-            appendline(filename, 'Granger causality test result for ' + str(loc2) + '->' + str(loc1) + "\n" + 'minimum p-value = ' + str(round(min_p_value[0], 4)) + ' =>  ' + str(min_p_value[0] <= alpha))
-        except:
-            appendline(filename, 'Granger causality test for ' + str(loc2) +  '-> ' + str(loc1) + ' failed')
+    data = pd.concat([X_train[lineage + '_' + loc1], X_train[lineage + '_' +  loc2]], axis=1)
+
+    test_result = grangercausalitytests(data, maxlag=maxlag, verbose=False)
+    p_values = [test_result[lag+1][0][test][1:3] for lag in range(maxlag)]
+    min_p_value = min(p_values, key=lambda x: x[0])
+
+    appendline(filename, 'Granger causality test result for ' + str(loc2) + '->' + str(loc1) + "\n" + 'minimum p-value = ' + str(round(min_p_value[0], 4)) + ' =>  ' + str(min_p_value[0] <= alpha))
+
+    if min_p_value[0] >= alpha:
+        appendline(filename, 'WARN: No Granger causality for ' + str(loc2) + '->' + str(loc1))
 
 
 def lagorder(X_train, lineage, maxlag, filename):
