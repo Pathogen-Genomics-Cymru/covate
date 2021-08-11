@@ -127,6 +127,7 @@ def plotautocorr(X_train, lineage, maxlag, output):
         plt.title('ACF for ' + str(name))
         plt.savefig(path + '/' + name + '_ACF.png')
         plt.clf()
+        plt.close()
 
 
 def grangercausality(X_train, lineage, loc1, loc2, maxlag, alpha, filename, errorlog):
@@ -249,6 +250,7 @@ def vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nstep
         plt.tight_layout()
         plt.savefig(path + '/' + lineage + '_' + region + '_VECM.png')
         plt.clf()
+        plt.close()
 
     # build testing dataset for validation
     X_train, X_test = X_train[0:-nsteps], X_train[-nsteps:]
@@ -277,6 +279,7 @@ def vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nstep
         plt.tight_layout()
         plt.savefig(path + '/' + lineage + '_' + region + '_VECM_validation.png')
         plt.clf()
+        plt.close()
 
 
 def vecautoreg(X_train, lineage, lag, regionlist, nsteps, alpha, filename, output):
@@ -355,6 +358,7 @@ def vecautoreg(X_train, lineage, lag, regionlist, nsteps, alpha, filename, outpu
         plt.tight_layout()
         plt.savefig(path + '/' + lineage + '_' + region + '_VAR.png')
         plt.clf()
+        plt.close()
 
     # build testing dataset for validation
 
@@ -427,4 +431,5 @@ def vecautoreg(X_train, lineage, lag, regionlist, nsteps, alpha, filename, outpu
         plt.tight_layout()
         plt.savefig(path + '/' + lineage + '_' + region + '_VAR_validation.png')
         plt.clf()
+        plt.close()
 
