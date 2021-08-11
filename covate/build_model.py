@@ -24,7 +24,8 @@ def buildmodel(timeseries, lineagelist, regionlist, output):
         filename = path + '/' + lineage + '_log.txt'
 
         # filter timeseries by lineage
-        X_train = timeseries.filter(like=lineage)
+        lineagestr = str(lineage) + '_'
+        X_train = timeseries.loc[:, timeseries.columns.str.startswith(lineagestr)]
 
         # set index freq
         X_train = X_train.asfreq('d')
