@@ -38,29 +38,45 @@ def buildmodel(timeseries, lineagelist, regionlist, output):
         grangercausality(X_train, lineage, regionlist, maxlag, alpha, filename)
 
         # find lag order
-        lag = lagorder(X_train, lineage, maxlag, filename)
+        try:
+            lag = lagorder(X_train, lineage, maxlag, filename)
+        except np.linalg.LinAlgError:
+            appendline(filename, 'ERROR: Cannot compute lag order')
+            continue
 
         # record deterministic terms for cointegration
         VECMdeterm = ''
 
         # first check cointegration for constant term and linear trend, note if VECMdeterm='colo' then coint_count for 'lo' is selected
-        for determ in range(0, 2):
+        try:
+            # first check cointegration for constant term and linear trend, note if VECMdeterm='colo' then coint_count for 'lo' is selected
+            for determ in range(0, 2):
 
-            runVECM, coint_count = cointegration(X_train, lineage, regionlist, lag, determ, filename)
+                runVECM, coint_count = cointegration(X_train, lineage, regionlist, lag, determ, filename)
 
-            VECMdeterm+= str(runVECM)
+                VECMdeterm+= str(runVECM)
 
-        # if no constant or linear determ then check cointegration for no determ
-        if not VECMdeterm:
+            # if no constant or linear determ then check cointegration for no determ
+            if not VECMdeterm:
 
-            runVECM, coint_count = cointegration(X_train, lineage, regionlist, lag, -1, filename)
+                runVECM, coint_count = cointegration(X_train, lineage, regionlist, lag, -1, filename)
+
+                VECMdeterm+= str(runVECM)
+
+        except np.linalg.LinAlgError:
+            appendline(filename, 'ERROR: Cannot run cointegration test')
+            continue
 
         # if lineage has cointegration, then run VECM
         if VECMdeterm:
 
             appendline(filename, 'Lineage has cointegration => Run VECM')
 
-            vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nsteps, alpha, filename, output)
+            try:
+                vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nsteps, alpha, filename, output)
+            except np.linalg.LinAlgError:
+                appendline(filename, 'ERROR: Cannot build VECM')
+                continue
 
         # else check for stationarity and difference then run VAR
         else:
