@@ -17,7 +17,7 @@ def main():
                         help="Select either adm1 or adm2")
     parser.add_argument("-l", "--lineage-type", dest="lineagetype", required=False, default="uk_lineage",
                         help="Select either lineage or uk_lineage")
-    parser.add_argument("-t", "--time-period", dest="timeperiod", required=False, default="6",
+    parser.add_argument("-t", "--time-period", dest="timeperiod", required=False, default="3",
                         help="Select time period in months to take from metadata")
     args = parser.parse_args()
 
