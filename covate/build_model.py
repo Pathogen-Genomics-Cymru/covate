@@ -22,6 +22,7 @@ def buildmodel(timeseries, lineagelist, regionlist, output):
         # set log file
         path = os.path.join(output, str(getdate()), lineage, 'logs')
         filename = path + '/' + lineage + '_log.txt'
+        errorlog = os.path.join(output, str(getdate()), 'error_log.txt')
 
         # filter timeseries by lineage
         lineagestr = str(lineage) + '_'
@@ -39,9 +40,10 @@ def buildmodel(timeseries, lineagelist, regionlist, output):
         # check for granger causality
         try:
             for loc1, loc2 in pairwise(regionlist):
-                grangercausality(X_train, lineage, loc1, loc2, maxlag, alpha, filename)
+                grangercausality(X_train, lineage, loc1, loc2, maxlag, alpha, filename, errorlog)
         except statserror.InfeasibleTestError:
             appendline(filename, 'ERROR: Cannot run Granger causality test for ' + str(loc2) +  '-> ' + str(loc1))
+            appendline(errorlog, str(lineage) + ' ERROR: Cannot run Granger causality test for ' + str(loc2) +  '-> ' + str(loc1))
             continue
 
         # find lag order
@@ -49,6 +51,7 @@ def buildmodel(timeseries, lineagelist, regionlist, output):
             lag = lagorder(X_train, lineage, maxlag, filename)
         except np.linalg.LinAlgError:
             appendline(filename, 'ERROR: Cannot compute lag order')
+            appendline(errorlog, str(lineage) + ' ERROR: Cannot compute lag order')
             continue
 
         # record deterministic terms for cointegration
@@ -72,26 +75,29 @@ def buildmodel(timeseries, lineagelist, regionlist, output):
 
         except np.linalg.LinAlgError:
             appendline(filename, 'ERROR: Cannot run cointegration test')
+            appendline(errorlog, str(lineage) + ' ERROR: Cannot run cointegration test')
             continue
 
-        # if lineage has cointegration, then run VECM
-        if VECMdeterm:
+        # build model
+        try:
+            # if lineage has cointegration, then run VECM
+            if VECMdeterm:
 
-            appendline(filename, 'Lineage has cointegration => Run VECM')
+                appendline(filename, 'Lineage has cointegration => Run VECM')
 
-            try:
-                vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nsteps, alpha, filename, output)
-            except np.linalg.LinAlgError:
-                appendline(filename, 'ERROR: Cannot build VECM')
-                continue
+                vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nsteps, alpha, filename, output, errorlog)
 
-        # else check for stationarity and difference then run VAR
-        else:
+            # else check for stationarity and difference then run VAR
+            else:
 
-            appendline(filename, 'Lineage has no cointegration => Run VAR')
+                appendline(filename, 'Lineage has no cointegration => Run VAR')
 
-            vecautoreg(X_train, lineage, lag, regionlist, nsteps, alpha, filename, output)
+                vecautoreg(X_train, lineage, lag, regionlist, nsteps, alpha, filename, output)
 
+        except np.linalg.LinAlgError:
+            appendline(filename, 'ERROR: Cannot build model')
+            appendline(errorlog, str(lineage) + ' ERROR: Cannot build model')
+            continue
 
 def checkdistribution(X_train, lineage, alpha, filename):
     """Get information about distribution"""
@@ -123,7 +129,7 @@ def plotautocorr(X_train, lineage, maxlag, output):
         plt.clf()
 
 
-def grangercausality(X_train, lineage, loc1, loc2, maxlag, alpha, filename):
+def grangercausality(X_train, lineage, loc1, loc2, maxlag, alpha, filename, errorlog):
     """Check for Granger Causality"""
 
     test = "ssr_chi2test"
@@ -138,6 +144,7 @@ def grangercausality(X_train, lineage, loc1, loc2, maxlag, alpha, filename):
 
     if min_p_value[0] >= alpha:
         appendline(filename, 'WARN: No Granger causality for ' + str(loc2) + '->' + str(loc1))
+        appendline(errorlog, str(lineage) + ' WARN: No Granger causality for ' + str(loc2) + '->' + str(loc1))
 
 
 def lagorder(X_train, lineage, maxlag, filename):
@@ -201,7 +208,7 @@ def adfullertest(X_train, lineage, alpha, filename):
     return adf_result
 
 
-def vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nsteps, alpha, filename, output):
+def vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nsteps, alpha, filename, output, errorlog):
     """ Build VECM model"""
 
     # minus 1 from lag for VECM
@@ -216,7 +223,8 @@ def vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nstep
     try:
         appendline(filename, vecm_fit.summary().as_text())
     except IndexError:
-        appendline(filename, 'Failed to create VECM summary')
+        appendline(filename, 'WARN: Failed to create VECM summary')
+        appendline(errorlog, str(lineage) + ' WARN: Failed to create VECM summary')
 
     vecm_fit.predict(steps=nsteps)
 
