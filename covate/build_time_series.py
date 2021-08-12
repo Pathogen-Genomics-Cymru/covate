@@ -103,6 +103,7 @@ def plotseries(dataframe, lineagelist, regionlist, output, enddate):
             ncolor+=1
         ax1.title.set_text('Time series for ' + lineage + ' for ' + str(regionlist))
         ax1.set_ylabel('Number of cases')
+        ax1.legend(loc="upper left")
         ax2.title.set_text('Lag plot for ' + lineage + ' for ' + str(regionlist))
         plt.tight_layout()
         plt.savefig(path + '/' + lineage + '_timeseries.png')

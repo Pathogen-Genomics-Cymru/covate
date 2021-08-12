@@ -19,10 +19,11 @@ def buildmodel(timeseries, lineagelist, regionlist, enddate, output):
 
     for lineage in lineagelist:
 
-        # set log file
+        # set log files and plt
         path = os.path.join(output, str(getenddate(enddate)), lineage, 'logs')
         filename = path + '/' + lineage + '_log.txt'
         errorlog = os.path.join(output, str(getenddate(enddate)), 'error_log.txt')
+        plt.rc('axes', titlesize=10)
 
         # filter timeseries by lineage
         lineagestr = str(lineage) + '_'
@@ -125,6 +126,8 @@ def plotautocorr(X_train, lineage, maxlag, output, enddate):
     for name, col in X_train.iteritems():
         plot_acf(col, lags=maxlag)
         plt.title('ACF for ' + str(name))
+        plt.ylabel('Autocorrelation')
+        plt.xlabel('Lag (days)')
         plt.savefig(path + '/' + name + '_ACF.png')
         plt.clf()
         plt.close()
@@ -247,6 +250,8 @@ def vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nstep
         plt.legend(loc="upper left")
         plt.locator_params(axis="y", integer=True, tight=True)
         plt.xticks(rotation=45)
+        plt.ylabel('Number of cases')
+        plt.xlabel('Sample date')
         plt.tight_layout()
         plt.savefig(path + '/' + lineage + '_' + region + '_VECM.png')
         plt.clf()
@@ -276,6 +281,8 @@ def vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nstep
         plt.legend(loc="upper left")
         plt.locator_params(axis="y", integer=True, tight=True)
         plt.xticks(rotation=45)
+        plt.ylabel('Number of cases')
+        plt.xlabel('Sample date')
         plt.tight_layout()
         plt.savefig(path + '/' + lineage + '_' + region + '_VECM_validation.png')
         plt.clf()
@@ -357,6 +364,8 @@ def vecautoreg(X_train, lineage, lag, regionlist, nsteps, alpha, filename, outpu
         plt.legend(loc="upper left")
         plt.locator_params(axis="y", integer=True, tight=True)
         plt.xticks(rotation=45)
+        plt.ylabel('Number of cases')
+        plt.xlabel('Sample date')
         plt.tight_layout()
         plt.savefig(path + '/' + lineage + '_' + region + '_VAR.png')
         plt.clf()
@@ -432,6 +441,8 @@ def vecautoreg(X_train, lineage, lag, regionlist, nsteps, alpha, filename, outpu
         plt.legend(loc="upper left")
         plt.locator_params(axis="y", integer=True, tight=True)
         plt.xticks(rotation=45)
+        plt.ylabel('Number of cases')
+        plt.xlabel('Sample date')
         plt.tight_layout()
         plt.savefig(path + '/' + lineage + '_' + region + '_VAR_validation.png')
         plt.clf()
