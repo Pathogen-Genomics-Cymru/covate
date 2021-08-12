@@ -8,9 +8,9 @@ import pandas as pd
 import numpy as np
 import scipy.stats as stats
 import matplotlib.pyplot as plt
-from .utils import appendline, pairwise, getdate
+from .utils import appendline, pairwise, getdate, getenddate
 
-def buildmodel(timeseries, lineagelist, regionlist, output):
+def buildmodel(timeseries, lineagelist, regionlist, enddate, output):
     """ Run stats tests for each lineage and select model and parameters"""
 
     maxlag=14
@@ -20,9 +20,9 @@ def buildmodel(timeseries, lineagelist, regionlist, output):
     for lineage in lineagelist:
 
         # set log file
-        path = os.path.join(output, str(getdate()), lineage, 'logs')
+        path = os.path.join(output, str(getenddate(enddate)), lineage, 'logs')
         filename = path + '/' + lineage + '_log.txt'
-        errorlog = os.path.join(output, str(getdate()), 'error_log.txt')
+        errorlog = os.path.join(output, str(getenddate(enddate)), 'error_log.txt')
 
         # filter timeseries by lineage
         lineagestr = str(lineage) + '_'
@@ -35,7 +35,7 @@ def buildmodel(timeseries, lineagelist, regionlist, output):
         checkdistribution(X_train, lineage, alpha, filename)
 
         # plot the autocorrelation
-        plotautocorr(X_train, lineage, maxlag, output)
+        plotautocorr(X_train, lineage, maxlag, output, enddate)
 
         # check for granger causality
         try:
@@ -85,14 +85,14 @@ def buildmodel(timeseries, lineagelist, regionlist, output):
 
                 appendline(filename, 'Lineage has cointegration => Run VECM')
 
-                vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nsteps, alpha, filename, output, errorlog)
+                vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nsteps, alpha, filename, output, errorlog, enddate)
 
             # else check for stationarity and difference then run VAR
             else:
 
                 appendline(filename, 'Lineage has no cointegration => Run VAR')
 
-                vecautoreg(X_train, lineage, lag, regionlist, nsteps, alpha, filename, output)
+                vecautoreg(X_train, lineage, lag, regionlist, nsteps, alpha, filename, output, enddate)
 
         except np.linalg.LinAlgError:
             appendline(filename, 'ERROR: Cannot build model')
@@ -117,10 +117,10 @@ def checkdistribution(X_train, lineage, alpha, filename):
         appendline(filename, 'Skewness = ' + str(round(stat_skew, 4)))
 
 
-def plotautocorr(X_train, lineage, maxlag, output):
+def plotautocorr(X_train, lineage, maxlag, output, enddate):
     """Plot autocorrelation"""
 
-    path = os.path.join(output, str(getdate()), lineage, 'additional-plots')
+    path = os.path.join(output, str(getenddate(enddate)), lineage, 'additional-plots')
 
     for name, col in X_train.iteritems():
         plot_acf(col, lags=maxlag)
@@ -209,7 +209,7 @@ def adfullertest(X_train, lineage, alpha, filename):
     return adf_result
 
 
-def vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nsteps, alpha, filename, output, errorlog):
+def vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nsteps, alpha, filename, output, errorlog, enddate):
     """ Build VECM model"""
 
     # minus 1 from lag for VECM
@@ -239,7 +239,7 @@ def vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nstep
     # cast negative predictions to zero
     pred[pred<0] = 0
 
-    path = os.path.join(output, str(getdate()), lineage, 'prediction')
+    path = os.path.join(output, str(getenddate(enddate)), lineage, 'prediction')
 
     for region in regionlist:
         plt.plot(pred[lineage + '_' + region], color='r', label='prediction')
@@ -267,7 +267,7 @@ def vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nstep
     # cast negative predictions to 0
     pred[pred<0] = 0
 
-    path = os.path.join(output, str(getdate()), lineage, 'validation')
+    path = os.path.join(output, str(getenddate(enddate)), lineage, 'validation')
 
     for region in regionlist:
         plt.plot(pred[lineage + '_' + region], color='r', label='prediction')
@@ -282,7 +282,7 @@ def vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nstep
         plt.close()
 
 
-def vecautoreg(X_train, lineage, lag, regionlist, nsteps, alpha, filename, output):
+def vecautoreg(X_train, lineage, lag, regionlist, nsteps, alpha, filename, output, enddate):
     """ Build VAR model"""
 
     # predict on entire dataset
@@ -347,7 +347,7 @@ def vecautoreg(X_train, lineage, lag, regionlist, nsteps, alpha, filename, outpu
     # cast negative predictions to 0
     fc[fc<0] = 0
 
-    path = os.path.join(output, str(getdate()), lineage, 'prediction')
+    path = os.path.join(output, str(getenddate(enddate)), lineage, 'prediction')
 
     for region in regionlist:
         plt.plot(fc[lineage + '_' + region], color='r', label='prediction')
@@ -419,7 +419,7 @@ def vecautoreg(X_train, lineage, lag, regionlist, nsteps, alpha, filename, outpu
     # cast negative predictions to 0
     fc[fc<0] = 0
 
-    path = os.path.join(output, str(getdate()), lineage, 'validation')
+    path = os.path.join(output, str(getenddate(enddate)), lineage, 'validation')
 
     for region in regionlist:
         plt.plot(fc[lineage + '_' + region], color='r', label='prediction')

@@ -45,10 +45,18 @@ def getdate():
     return out_time
 
 
-def createoutputdir(lineage, output):
+def getenddate(enddate):
+    """get the current date """
+
+    out_time = enddate.strftime("%b-%d-%Y")
+
+    return out_time
+
+
+def createoutputdir(lineage, output, enddate):
     """create output directory structure"""
 
-    out_time = getdate()
+    out_time = getenddate(enddate)
 
     out_list = ['prediction', 'validation', 'logs', 'additional-plots']
 

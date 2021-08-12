@@ -19,13 +19,15 @@ def main():
                         help="Select either lineage or uk_lineage")
     parser.add_argument("-t", "--time-period", dest="timeperiod", required=False, default="3",
                         help="Select time period in months to take from metadata")
+    parser.add_argument("-e", "--end-date", dest="enddate", required=False, default="",
+                        help="Select end date to take from metadata. Format: d/m/Y")
     args = parser.parse_args()
 
     # build the time series
-    countbydate, lineagecommon, region_list = buildseries(args.metadata, args.regions, args.adm, args.lineagetype, args.timeperiod, args.output)
+    countbydate, lineagecommon, region_list, enddate = buildseries(args.metadata, args.regions, args.adm, args.lineagetype, args.timeperiod, args.enddate, args.output)
 
     # build the model
-    buildmodel(countbydate, lineagecommon, region_list, args.output)
+    buildmodel(countbydate, lineagecommon, region_list, enddate, args.output)
 
 if __name__ == '__main__':
     main()

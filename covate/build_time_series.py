@@ -3,10 +3,11 @@ import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from .utils import getdate, createoutputdir
+from .utils import getdate, getenddate, createoutputdir
 
-def buildseries(metadata, regions, adm, lineagetype, timeperiod, output):
+def buildseries(metadata, regions, adm, lineagetype, timeperiod, enddate, output):
     """ Build the time series for lineages common to specified regions"""
 
     # load metadata and index by date
@@ -16,7 +17,7 @@ def buildseries(metadata, regions, adm, lineagetype, timeperiod, output):
     df[adm] = df[adm].astype(str)
 
     # select time period
-    df = gettimeperiod(df, timeperiod)
+    df, enddate = gettimeperiod(df, timeperiod, enddate)
 
     # get region list
     region_list = [str(region) for region in regions.split(', ')]
@@ -54,26 +55,29 @@ def buildseries(metadata, regions, adm, lineagetype, timeperiod, output):
 
     # create output directory
     for lineage in lineagecommon:
-        createoutputdir(lineage, output)
+        createoutputdir(lineage, output, enddate)
 
     # save raw time series
-    path = os.path.join(output, str(getdate()))
+    path = os.path.join(output, str(getenddate(enddate)))
     countbydate.to_csv(path + '/timeseriesraw.csv', sep=',')
 
     # pad time series
     #countbydate = padseries(countbydate)
 
     # plot time series and lag plot
-    plotseries(countbydate, lineagecommon, region_list, output)
+    plotseries(countbydate, lineagecommon, region_list, output, enddate)
 
-    return countbydate, lineagecommon, region_list
+    return countbydate, lineagecommon, region_list, enddate
 
 
-def gettimeperiod(dataframe, timeperiod):
+def gettimeperiod(dataframe, timeperiod, enddate):
     """Extract time period from metadata specified by --time-period"""
 
-    # get the most recent date in metadata
-    enddate = dataframe.index.max() - relativedelta(days=7)
+    # if enddate is not specified, get the most recent date in metadata and -7 days
+    if enddate:
+        enddate = datetime.strptime(enddate, '%d/%m/%Y')
+    else:
+        enddate = dataframe.index.max() - relativedelta(days=7)
 
     # select previous x months from most recent date
     startdate = enddate - relativedelta(months=+int(timeperiod))
@@ -81,10 +85,10 @@ def gettimeperiod(dataframe, timeperiod):
     # get range of dates
     dataframe = dataframe.sort_index().loc[str(startdate):str(enddate)]
 
-    return dataframe
+    return dataframe, enddate
 
 
-def plotseries(dataframe, lineagelist, regionlist, output):
+def plotseries(dataframe, lineagelist, regionlist, output, enddate):
     """Plot the time series and lag plots"""
 
     colors = ['r', 'g', 'b', 'm', 'c', 'y']
@@ -92,7 +96,7 @@ def plotseries(dataframe, lineagelist, regionlist, output):
     for lineage in lineagelist:
         ncolor = 0
         fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(10,6))
-        path = os.path.join(output, str(getdate()), lineage, 'additional-plots')
+        path = os.path.join(output, str(getenddate(enddate)), lineage, 'additional-plots')
         for region in regionlist:
             dataframe[lineage + '_' + region].plot(ax=ax1, c=colors[ncolor])
             pd.plotting.lag_plot(dataframe[lineage + '_' + region], c=colors[ncolor], ax=ax2)
