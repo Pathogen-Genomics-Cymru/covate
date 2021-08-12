@@ -343,6 +343,8 @@ def vecautoreg(X_train, lineage, lag, regionlist, nsteps, alpha, filename, outpu
         elif VARdiff == 'second':
             fc[str(col)+'_1d'] = (Xtrain[col].iloc[-1] - Xtrain[col].iloc[-2]) + fc[str(col)+'_diff'].cumsum()
             fc[str(col)] = Xtrain[col].iloc[-1] + fc[str(col)+'_1d'].cumsum()
+        elif VARdiff == 'none':
+            fc[str(col)] = fc[str(col)+'_diff']
 
     # cast negative predictions to 0
     fc[fc<0] = 0
@@ -415,6 +417,8 @@ def vecautoreg(X_train, lineage, lag, regionlist, nsteps, alpha, filename, outpu
         elif VARdiff == 'second':
             fc[str(col)+'_1d'] = (X_train[col].iloc[-1] - X_train[col].iloc[-2]) + fc[str(col)+'_diff'].cumsum()
             fc[str(col)] = X_train[col].iloc[-1] + fc[str(col)+'_1d'].cumsum()
+        elif VARdiff == 'none':
+            fc[str(col)] = fc[str(col)+'_diff']
 
     # cast negative predictions to 0
     fc[fc<0] = 0
