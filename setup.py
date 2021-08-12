@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import setuptools
+from covate import version
 
 requirements = [
     "cycler",
@@ -21,6 +22,7 @@ requirements = [
 
 setuptools.setup(
     name="covate",
+    version=version.__version__,
     url="https://github.com/Pathogen-Genomics-Cymru/covate",
 
     description="Predicts time series for SARS-Cov-2 lineages",
