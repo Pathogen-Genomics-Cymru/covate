@@ -44,7 +44,7 @@ optional arguments:
 * **--adm** <br /> Select adm the regions belong to (adm1 or adm2). Default **adm1**
 * **--lineage-type** <br /> Select whether to compare global or uk lineages (lineage or uk_lineage). Default **uk_lineage**
 * **--time-period** <br /> Select time period in months to take from the input metadata csv. Default **3**
-* **--end-date** <br /> The end date of the time period to take from the input metadata csv. Default **latest date in the metadata -7 days** (to account for lag in data)
+* **--end-date** <br /> The end date of the time period to take from the input metadata csv. Expected format is d/m/Y, e.g. 31/7/2021. Default **latest date in the metadata -7 days** (to account for lag in data)
 
 ## Workflow ##
 <img height="600" src="https://github.com/Pathogen-Genomics-Cymru/covate/blob/main/covate-workflow.png" />
@@ -52,9 +52,9 @@ optional arguments:
 ## Output ##
 A date-stamped output directory is created with sub-directories for each common lineage. At the top level you will find a csv of the timeseries and an error log file. In a lineage sub-directory you should find the following directories and plots:
 * **prediction** The forecasted time series for each region
-* **validation** A validation forecast for each region (plots the time series for the last two weeks of the metadata with a forecast)
+* **validation** A validation forecast for each region (plots the time series for the last two weeks prior to the set end date with a forecast)
 * **logs** A log file containing results of the stats tests
 * **additional-plots** Time series for the lineage and ACF plots for each region
 
-## Error Log ##
+### Error Log ###
 The error log will likely contain ERROR and WARN messages for some lineages. ERROR messages indicate a fatal error where the code was unable to build a model for a lineage due to poor quality data. WARN messages indicate a non-fatal error, in this case the model should build for a lineage, but the message may indicate that the model might not be accurate (e.g. A WARN message is recorded if causality is not found). These ERROR and WARN messages are also duplicated in the individual log file for each lineage.
