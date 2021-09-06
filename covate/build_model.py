@@ -10,7 +10,7 @@ import scipy.stats as stats
 import matplotlib.pyplot as plt
 from .utils import appendline, pairwise, getdate, getenddate
 
-def buildmodel(timeseries, lineagelist, regionlist, enddate, output):
+def buildmodel(timeseries, lineagelist, regionlist, enddate, output, validate):
     """ Run stats tests for each lineage and select model and parameters"""
 
     maxlag=14
@@ -27,10 +27,14 @@ def buildmodel(timeseries, lineagelist, regionlist, enddate, output):
 
         # filter timeseries by lineage
         lineagestr = str(lineage) + '_'
-        X_train = timeseries.loc[:, timeseries.columns.str.startswith(lineagestr)]
 
-        # set index freq
+        # build Xtrain and set index freq
+        X_train = timeseries.loc[:, timeseries.columns.str.startswith(lineagestr)]
         X_train = X_train.asfreq('d')
+
+        # if running validation, build testing dataset
+        if validate:
+            X_train, X_test = X_train[0:-nsteps], X_train[-nsteps:]
 
         # get basic information on timeseries
         checkdistribution(X_train, lineage, alpha, filename)
@@ -57,15 +61,17 @@ def buildmodel(timeseries, lineagelist, regionlist, enddate, output):
 
         # record deterministic terms for cointegration
         VECMdeterm = ''
+        coint = []
 
-        # first check cointegration for constant term and linear trend, note if VECMdeterm='colo' then coint_count for 'lo' is selected
         try:
-            # first check cointegration for constant term and linear trend, note if VECMdeterm='colo' then coint_count for 'lo' is selected
-            for determ in range(0, 2):
+            # first check cointegration for constant term and linear trend
+            for determ in reversed(range(0, 2)):
 
                 runVECM, coint_count = cointegration(X_train, lineage, regionlist, lag, determ, filename)
 
                 VECMdeterm+= str(runVECM)
+
+                coint.append(coint_count)
 
             # if no constant or linear determ then check cointegration for no determ
             if not VECMdeterm:
@@ -73,6 +79,14 @@ def buildmodel(timeseries, lineagelist, regionlist, enddate, output):
                 runVECM, coint_count = cointegration(X_train, lineage, regionlist, lag, -1, filename)
 
                 VECMdeterm+= str(runVECM)
+
+                coint.append(coint_count)
+
+            # find minimum count over 0, else 0
+            try:
+                coint_count = min(item for item in coint if item > 0)
+            except:
+                coint_count = 0
 
         except np.linalg.LinAlgError:
             appendline(filename, 'ERROR: Cannot run cointegration test')
@@ -86,16 +100,22 @@ def buildmodel(timeseries, lineagelist, regionlist, enddate, output):
 
                 appendline(filename, 'Lineage has cointegration => Run VECM')
 
-                vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nsteps, alpha, filename, output, errorlog, enddate)
+                if not validate:
+                    vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nsteps, alpha, filename, output, errorlog, enddate)
+                else:
+                    vecerrcorrvalid(X_train, X_test, lineage, VECMdeterm, lag, coint_count, regionlist, nsteps, alpha, filename, output, errorlog, enddate)
 
             # else check for stationarity and difference then run VAR
             else:
 
                 appendline(filename, 'Lineage has no cointegration => Run VAR')
 
-                vecautoreg(X_train, lineage, lag, regionlist, nsteps, alpha, filename, output, enddate)
+                if not validate:
+                    vecautoreg(X_train, lineage, maxlag, regionlist, nsteps, alpha, filename, output, enddate)
+                else:
+                    vecautoregvalid(X_train, X_test, lineage, maxlag, regionlist, nsteps, alpha, filename, output, enddate)
 
-        except np.linalg.LinAlgError:
+        except (np.linalg.LinAlgError) as e:
             appendline(filename, 'ERROR: Cannot build model')
             appendline(errorlog, str(lineage) + ' ERROR: Cannot build model')
             continue
@@ -169,6 +189,9 @@ def cointegration(X_train, lineage, regionlist, lag, determ, filename):
     runVECM = ''
 
     d = {'0.90':0, '0.95':1, '0.99':2}
+
+    if lag != 0:
+        lag = int(lag) - 1
 
     out = coint_johansen(X_train, determ, lag)
     out_traces = out.lr1
@@ -250,16 +273,22 @@ def vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nstep
         plt.legend(loc="upper left")
         plt.locator_params(axis="y", integer=True, tight=True)
         plt.xticks(rotation=45)
-        plt.ylabel('Number of cases')
+        plt.ylabel('Number of sequenced cases')
         plt.xlabel('Sample date')
         plt.tight_layout()
         plt.savefig(path + '/' + lineage + '_' + region + '_VECM.png')
         plt.clf()
         plt.close()
 
-    # build testing dataset for validation
-    X_train, X_test = X_train[0:-nsteps], X_train[-nsteps:]
 
+def vecerrcorrvalid(X_train, X_test, lineage, VECMdeterm, lag, coint_count, regionlist, nsteps, alpha, filename, output, errorlog, enddate):
+    """Build VECM model for validation"""
+
+    # minus 1 from lag for VECM
+    if lag != 0:
+        lag = int(lag) - 1
+
+    # build predict for validation dataset
     vecm = VECM(endog = X_train, k_ar_diff = lag, coint_rank = coint_count, deterministic = VECMdeterm)
 
     vecm_fit = vecm.fit()
@@ -281,7 +310,7 @@ def vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nstep
         plt.legend(loc="upper left")
         plt.locator_params(axis="y", integer=True, tight=True)
         plt.xticks(rotation=45)
-        plt.ylabel('Number of cases')
+        plt.ylabel('Number of sequenced cases')
         plt.xlabel('Sample date')
         plt.tight_layout()
         plt.savefig(path + '/' + lineage + '_' + region + '_VECM_validation.png')
@@ -289,72 +318,60 @@ def vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nstep
         plt.close()
 
 
-def vecautoreg(X_train, lineage, lag, regionlist, nsteps, alpha, filename, output, enddate):
+def vecautoreg(X_train, lineage, maxlag, regionlist, nsteps, alpha, filename, output, enddate):
     """ Build VAR model"""
-
-    # predict on entire dataset
-    Xtrain = X_train.copy()
 
     # check for stationarity and difference
 
-    adf_result = adfullertest(Xtrain, lineage, alpha, filename)
+    adf_result = adfullertest(X_train, lineage, alpha, filename)
 
-    # record whether no diff, first diff or second diff
+    # record whether no diff, or first diff
 
     VARdiff = 'none'
 
     # first diff and recalculate ADF
     if False in adf_result:
 
-        Xtrain = Xtrain.diff().dropna()
+        X_train = X_train.diff().dropna()
 
-        adf_result = adfullertest(Xtrain, lineage, alpha, filename)
+        adf_result = adfullertest(X_train, lineage, alpha, filename)
 
         VARdiff = 'first'
 
         appendline(filename, 'Series has been first differenced')
 
-    # second diff
-    if False in adf_result:
-
-         Xtrain = Xtrain.diff().dropna()
-
-         adf_result = adfullertest(Xtrain, lineage, alpha, filename)
-
-         VARdiff = 'second'
-
-         appendline(filename, 'Series has been second differenced')
-
     # build var
-    varm = VAR(endog = Xtrain)
+    varm = VAR(endog = X_train)
 
-    varm_fit = varm.fit(maxlags=lag)
+    # recalculate lag order for transformed series
+    lagorder = varm.select_order(maxlag)
+    lag = int(lagorder.aic)
 
-    lag_order = varm_fit.k_ar
+    varm_fit = varm.fit(lag)
 
-    forecast_input = Xtrain.values[-lag_order:]
+    forecast_input = X_train.values[-lag:]
 
     forecast = varm_fit.forecast(y=forecast_input, steps=nsteps)
 
     # get last index from X_train and build index for prediction
-    idx = pd.date_range(Xtrain.index[-1], periods=nsteps+1, freq='d')[1:]
+    idx = pd.date_range(X_train.index[-1], periods=nsteps+1, freq='d')[1:]
 
-    pred = pd.DataFrame(forecast.round(0), index=idx, columns=Xtrain.columns + '_diff')
+    pred = pd.DataFrame(forecast.round(0), index=idx, columns=X_train.columns + '_diff')
 
     # undo difference
     fc = pred.copy()
-    columns = Xtrain.columns
+    columns = X_train.columns
     for col in columns:
         if VARdiff == 'first':
-            fc[str(col)] = Xtrain[col].iloc[-1] + fc[str(col)+'_diff'].cumsum()
-        elif VARdiff == 'second':
-            fc[str(col)+'_1d'] = (Xtrain[col].iloc[-1] - Xtrain[col].iloc[-2]) + fc[str(col)+'_diff'].cumsum()
-            fc[str(col)] = Xtrain[col].iloc[-1] + fc[str(col)+'_1d'].cumsum()
+            fc[str(col)] = X_train[col].iloc[-1] + fc[str(col)+'_diff'].cumsum()
+            # shift series by minimum negative value
+            minval = np.amin(fc[str(col)])
+            fc[str(col)]+=abs(minval)
         elif VARdiff == 'none':
             fc[str(col)] = fc[str(col)+'_diff']
 
     # cast negative predictions to 0
-    fc[fc<0] = 0
+    #fc[fc<0] = 0
 
     path = os.path.join(output, str(getenddate(enddate)), lineage, 'prediction')
 
@@ -364,19 +381,18 @@ def vecautoreg(X_train, lineage, lag, regionlist, nsteps, alpha, filename, outpu
         plt.legend(loc="upper left")
         plt.locator_params(axis="y", integer=True, tight=True)
         plt.xticks(rotation=45)
-        plt.ylabel('Number of cases')
+        plt.ylabel('Number of sequenced cases')
         plt.xlabel('Sample date')
         plt.tight_layout()
         plt.savefig(path + '/' + lineage + '_' + region + '_VAR.png')
         plt.clf()
         plt.close()
 
-    # build testing dataset for validation
 
-    X_train, X_test = X_train[0:-nsteps], X_train[-nsteps:]
+def vecautoregvalid(X_train, X_test, lineage, maxlag, regionlist, nsteps, alpha, filename, output, enddate):
+    """Build VAR model for validation"""
 
     # check for stationarity and difference
-
     adf_result = adfullertest(X_train, lineage, alpha, filename)
 
     # record whether no diff, first diff or second diff
@@ -394,25 +410,16 @@ def vecautoreg(X_train, lineage, lag, regionlist, nsteps, alpha, filename, outpu
 
         appendline(filename, 'Series has been first differenced')
 
-    # second diff
-    if False in adf_result:
-
-         X_train = X_train.diff().dropna()
-
-         adf_result = adfullertest(X_train, lineage, alpha, filename)
-
-         VARdiff = 'second'
-
-         appendline(filename, 'Series has been second differenced')
-
     # build var
     varm = VAR(endog = X_train)
 
-    varm_fit = varm.fit(maxlags=lag)
+    # recalculate lag order
+    lagorder = varm.select_order(maxlag)
+    lag = int(lagorder.aic)
 
-    lag_order = varm_fit.k_ar
+    varm_fit = varm.fit(lag)
 
-    forecast_input = X_train.values[-lag_order:]
+    forecast_input = X_train.values[-lag:]
 
     forecast = varm_fit.forecast(y=forecast_input, steps=nsteps)
     pred = pd.DataFrame(forecast.round(0), index=X_test.index, columns=X_test.columns + '_diff')
@@ -423,14 +430,14 @@ def vecautoreg(X_train, lineage, lag, regionlist, nsteps, alpha, filename, outpu
     for col in columns:
         if VARdiff == 'first':
             fc[str(col)] = X_train[col].iloc[-1] + fc[str(col)+'_diff'].cumsum()
-        elif VARdiff == 'second':
-            fc[str(col)+'_1d'] = (X_train[col].iloc[-1] - X_train[col].iloc[-2]) + fc[str(col)+'_diff'].cumsum()
-            fc[str(col)] = X_train[col].iloc[-1] + fc[str(col)+'_1d'].cumsum()
+            minval = np.amin(fc[str(col)])
+            fc[str(col)]+=abs(minval)
         elif VARdiff == 'none':
             fc[str(col)] = fc[str(col)+'_diff']
 
+
     # cast negative predictions to 0
-    fc[fc<0] = 0
+    #fc[fc<0] = 0
 
     path = os.path.join(output, str(getenddate(enddate)), lineage, 'validation')
 
@@ -441,10 +448,9 @@ def vecautoreg(X_train, lineage, lag, regionlist, nsteps, alpha, filename, outpu
         plt.legend(loc="upper left")
         plt.locator_params(axis="y", integer=True, tight=True)
         plt.xticks(rotation=45)
-        plt.ylabel('Number of cases')
+        plt.ylabel('Number of sequenced cases')
         plt.xlabel('Sample date')
         plt.tight_layout()
         plt.savefig(path + '/' + lineage + '_' + region + '_VAR_validation.png')
         plt.clf()
         plt.close()
-

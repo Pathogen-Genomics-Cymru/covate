@@ -7,7 +7,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from .utils import getdate, getenddate, createoutputdir
 
-def buildseries(metadata, regions, adm, lineagetype, timeperiod, enddate, output):
+def buildseries(metadata, regions, adm, lineagetype, timeperiod, enddate, output, validate):
     """ Build the time series for lineages common to specified regions"""
 
     # load metadata and index by date
@@ -17,7 +17,7 @@ def buildseries(metadata, regions, adm, lineagetype, timeperiod, enddate, output
     df[adm] = df[adm].astype(str)
 
     # select time period
-    df, enddate = gettimeperiod(df, timeperiod, enddate)
+    df, enddate = gettimeperiod(df, timeperiod, enddate, validate)
 
     # get region list
     region_list = [str(region) for region in regions.split(', ')]
@@ -53,24 +53,25 @@ def buildseries(metadata, regions, adm, lineagetype, timeperiod, enddate, output
         else:
             lineagecommon.append(lineage)
 
+    # pad time series
+    #countbydate = padseries(countbydate)
+
     # create output directory
     for lineage in lineagecommon:
         createoutputdir(lineage, output, enddate)
 
-    # save raw time series
-    path = os.path.join(output, str(getenddate(enddate)))
-    countbydate.to_csv(path + '/timeseriesraw.csv', sep=',')
+    if not validate:
+        # save raw time series
+        path = os.path.join(output, str(getenddate(enddate)))
+        countbydate.to_csv(path + '/timeseriesraw.csv', sep=',')
 
-    # pad time series
-    #countbydate = padseries(countbydate)
-
-    # plot time series and lag plot
-    plotseries(countbydate, lineagecommon, region_list, output, enddate)
+        # plot time series and lag plot
+        plotseries(countbydate, lineagecommon, region_list, output, enddate)
 
     return countbydate, lineagecommon, region_list, enddate
 
 
-def gettimeperiod(dataframe, timeperiod, enddate):
+def gettimeperiod(dataframe, timeperiod, enddate, validate):
     """Extract time period from metadata specified by --time-period"""
 
     # if enddate is not specified, get the most recent date in metadata and -7 days
@@ -79,8 +80,11 @@ def gettimeperiod(dataframe, timeperiod, enddate):
     else:
         enddate = dataframe.index.max() - relativedelta(days=7)
 
-    # select previous x months from most recent date
-    startdate = enddate - relativedelta(months=+int(timeperiod))
+    # select previous x weeks from most recent date
+    if not validate:
+        startdate = enddate - relativedelta(weeks=+int(timeperiod))
+    else:
+        startdate = enddate - relativedelta(weeks=+int(timeperiod)+2)
 
     # get range of dates
     dataframe = dataframe.sort_index().loc[str(startdate):str(enddate)]
@@ -114,8 +118,8 @@ def plotseries(dataframe, lineagelist, regionlist, output, enddate):
 def padseries(dataframe):
     """Pad the time series"""
 
-    dataframe = dataframe.replace(0, np.nan)
-    dataframe = dataframe.fillna(method='pad')
+    dataframe = dataframe.replace(0.0, np.nan)
+    dataframe = dataframe.fillna(value=1.0)
     dataframe = dataframe.dropna()
 
     return dataframe

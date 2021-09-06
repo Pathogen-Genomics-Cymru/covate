@@ -17,17 +17,26 @@ def main():
                         help="Select either adm1 or adm2")
     parser.add_argument("-l", "--lineage-type", dest="lineagetype", required=False, default="uk_lineage",
                         help="Select either lineage or uk_lineage")
-    parser.add_argument("-t", "--time-period", dest="timeperiod", required=False, default="3",
-                        help="Select time period in months to take from metadata")
+    parser.add_argument("-t", "--time-period", dest="timeperiod", required=False, default="12",
+                        help="Select time period in weeks to take from metadata")
     parser.add_argument("-e", "--end-date", dest="enddate", required=False, default="",
                         help="Select end date to take from metadata. Format: d/m/Y")
+    parser.add_argument("-v", "--validate", dest="validate", type=bool, required=False, default="True",
+                        help="Run validation forecast. True or False")
     args = parser.parse_args()
 
     # build the time series
-    countbydate, lineagecommon, region_list, enddate = buildseries(args.metadata, args.regions, args.adm, args.lineagetype, args.timeperiod, args.enddate, args.output)
+    countbydate, lineagecommon, region_list, enddate = buildseries(args.metadata, args.regions, args.adm, args.lineagetype, args.timeperiod, args.enddate, args.output, False)
 
     # build the model
-    buildmodel(countbydate, lineagecommon, region_list, enddate, args.output)
+    buildmodel(countbydate, lineagecommon, region_list, enddate, args.output, False)
+
+    # if validation forecast selected, run again
+    if args.validate:
+
+        countbydate, lineagecommon, region_list, enddate = buildseries(args.metadata, args.regions, args.adm, args.lineagetype, args.timeperiod, args.enddate, args.output, args.validate)
+
+        buildmodel(countbydate, lineagecommon, region_list, enddate, args.output, args.validate)
 
 if __name__ == '__main__':
     main()
