@@ -58,7 +58,7 @@ def createoutputdir(lineage, output, enddate):
 
     out_time = getenddate(enddate)
 
-    out_list = ['prediction', 'validation', 'logs', 'additional-plots']
+    out_list = ['prediction', 'validation', 'logs/prediction', 'logs/validation', 'additional-plots/prediction/VAR', 'additional-plots/validation/VAR']
 
     for elem in out_list:
         out_dir = os.path.join(out_time, lineage ,elem)

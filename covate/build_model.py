@@ -19,11 +19,18 @@ def buildmodel(timeseries, lineagelist, regionlist, enddate, output, validate):
 
     for lineage in lineagelist:
 
-        # set log files and plt
-        path = os.path.join(output, str(getenddate(enddate)), lineage, 'logs')
-        filename = path + '/' + lineage + '_log.txt'
-        errorlog = os.path.join(output, str(getenddate(enddate)), 'error_log.txt')
+        # set plt
         plt.rc('axes', titlesize=10)
+
+        # set log files
+        if validate:
+            path = os.path.join(output, str(getenddate(enddate)), lineage, 'logs/validation')
+            filename = path + '/' + lineage + '_log.txt'
+            errorlog = os.path.join(output, str(getenddate(enddate)), 'error_log_validation.txt')
+        else:
+            path = os.path.join(output, str(getenddate(enddate)), lineage, 'logs/prediction')
+            filename = path + '/' + lineage + '_log.txt'
+            errorlog = os.path.join(output, str(getenddate(enddate)), 'error_log_prediction.txt')
 
         # filter timeseries by lineage
         lineagestr = str(lineage) + '_'
@@ -40,7 +47,10 @@ def buildmodel(timeseries, lineagelist, regionlist, enddate, output, validate):
         checkdistribution(X_train, lineage, alpha, filename)
 
         # plot the autocorrelation
-        plotautocorr(X_train, lineage, maxlag, output, enddate)
+        if validate:
+            plotautocorr(X_train, lineage, maxlag, output, enddate, 'additional-plots/validation')
+        else:
+            plotautocorr(X_train, lineage, maxlag, output, enddate, 'additional-plots/prediction')
 
         # check for granger causality
         try:
@@ -111,9 +121,9 @@ def buildmodel(timeseries, lineagelist, regionlist, enddate, output, validate):
                 appendline(filename, 'Lineage has no cointegration => Run VAR')
 
                 if not validate:
-                    vecautoreg(X_train, lineage, maxlag, regionlist, nsteps, alpha, filename, output, enddate)
+                    vecautoreg(X_train, lineage, maxlag, regionlist, nsteps, alpha, filename, output, errorlog, enddate)
                 else:
-                    vecautoregvalid(X_train, X_test, lineage, maxlag, regionlist, nsteps, alpha, filename, output, enddate)
+                    vecautoregvalid(X_train, X_test, lineage, maxlag, regionlist, nsteps, alpha, filename, output, errorlog, enddate)
 
         except (np.linalg.LinAlgError) as e:
             appendline(filename, 'ERROR: Cannot build model')
@@ -138,10 +148,10 @@ def checkdistribution(X_train, lineage, alpha, filename):
         appendline(filename, 'Skewness = ' + str(round(stat_skew, 4)))
 
 
-def plotautocorr(X_train, lineage, maxlag, output, enddate):
+def plotautocorr(X_train, lineage, maxlag, output, enddate, folder):
     """Plot autocorrelation"""
 
-    path = os.path.join(output, str(getenddate(enddate)), lineage, 'additional-plots')
+    path = os.path.join(output, str(getenddate(enddate)), lineage, folder)
 
     for name, col in X_train.iteritems():
         plot_acf(col, lags=maxlag)
@@ -263,7 +273,7 @@ def vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nstep
     pred = (pd.DataFrame(forecast.round(0), columns=X_train.columns, index=idx))
 
     # cast negative predictions to zero
-    pred[pred<0] = 0
+    #pred[pred<0] = 0
 
     path = os.path.join(output, str(getenddate(enddate)), lineage, 'prediction')
 
@@ -292,6 +302,13 @@ def vecerrcorrvalid(X_train, X_test, lineage, VECMdeterm, lag, coint_count, regi
     vecm = VECM(endog = X_train, k_ar_diff = lag, coint_rank = coint_count, deterministic = VECMdeterm)
 
     vecm_fit = vecm.fit()
+
+    try:
+        appendline(filename, vecm_fit.summary().as_text())
+    except IndexError:
+        appendline(filename, 'WARN: Failed to create VECM summary')
+        appendline(errorlog, str(lineage) + ' WARN: Failed to create VECM summary')
+
     vecm_fit.predict(steps=nsteps)
 
     forecast, lower, upper = vecm_fit.predict(nsteps, alpha)
@@ -299,7 +316,7 @@ def vecerrcorrvalid(X_train, X_test, lineage, VECMdeterm, lag, coint_count, regi
     pred = (pd.DataFrame(forecast.round(0), index=X_test.index, columns=X_test.columns))
 
     # cast negative predictions to 0
-    pred[pred<0] = 0
+    #pred[pred<0] = 0
 
     path = os.path.join(output, str(getenddate(enddate)), lineage, 'validation')
 
@@ -318,7 +335,7 @@ def vecerrcorrvalid(X_train, X_test, lineage, VECMdeterm, lag, coint_count, regi
         plt.close()
 
 
-def vecautoreg(X_train, lineage, maxlag, regionlist, nsteps, alpha, filename, output, enddate):
+def vecautoreg(X_train, lineage, maxlag, regionlist, nsteps, alpha, filename, output, errorlog, enddate):
     """ Build VAR model"""
 
     # check for stationarity and difference
@@ -339,6 +356,24 @@ def vecautoreg(X_train, lineage, maxlag, regionlist, nsteps, alpha, filename, ou
         VARdiff = 'first'
 
         appendline(filename, 'Series has been first differenced')
+
+    # add warn message if series is still not stationary
+    if False in adf_result:
+
+        appendline(filename, 'WARN: Series is not stationary')
+
+        appendline(errorlog, str(lineage) + ' WARN: Series is not stationary')
+
+    # plot autocorrelation again
+    plotautocorr(X_train, lineage, maxlag, output, enddate, 'additional-plots/prediction/VAR')
+
+    # plot series to check it's stationary
+    path = os.path.join(output, str(getenddate(enddate)), lineage, 'additional-plots/prediction/VAR')
+    X_train.plot()
+    plt.tight_layout()
+    plt.savefig(path + '/' + lineage + '_stationary_check.png')
+    plt.clf()
+    plt.close()
 
     # build var
     varm = VAR(endog = X_train)
@@ -369,6 +404,9 @@ def vecautoreg(X_train, lineage, maxlag, regionlist, nsteps, alpha, filename, ou
             fc[str(col)]+=abs(minval)
         elif VARdiff == 'none':
             fc[str(col)] = fc[str(col)+'_diff']
+            # shift series by minimum negative value
+            minval = np.amin(fc[str(col)])
+            fc[str(col)]+=abs(minval)
 
     # cast negative predictions to 0
     #fc[fc<0] = 0
@@ -389,7 +427,7 @@ def vecautoreg(X_train, lineage, maxlag, regionlist, nsteps, alpha, filename, ou
         plt.close()
 
 
-def vecautoregvalid(X_train, X_test, lineage, maxlag, regionlist, nsteps, alpha, filename, output, enddate):
+def vecautoregvalid(X_train, X_test, lineage, maxlag, regionlist, nsteps, alpha, filename, output, errorlog, enddate):
     """Build VAR model for validation"""
 
     # check for stationarity and difference
@@ -409,6 +447,24 @@ def vecautoregvalid(X_train, X_test, lineage, maxlag, regionlist, nsteps, alpha,
         VARdiff = 'first'
 
         appendline(filename, 'Series has been first differenced')
+
+    # add warn message if series is still not stationary
+    if False in adf_result:
+
+        appendline(filename, 'WARN: Series is not stationary')
+
+        appendline(errorlog, str(lineage) + ' WARN: Series is not stationary')
+
+    # plot autocorrelation again
+    plotautocorr(X_train, lineage, maxlag, output, enddate, 'additional-plots/validation/VAR')
+
+    # plot series to check it's stationary
+    path = os.path.join(output, str(getenddate(enddate)), lineage, 'additional-plots/validation/VAR')
+    X_train.plot()
+    plt.tight_layout()
+    plt.savefig(path + '/' + lineage + '_stationary_check.png')
+    plt.clf()
+    plt.close()
 
     # build var
     varm = VAR(endog = X_train)
@@ -434,7 +490,9 @@ def vecautoregvalid(X_train, X_test, lineage, maxlag, regionlist, nsteps, alpha,
             fc[str(col)]+=abs(minval)
         elif VARdiff == 'none':
             fc[str(col)] = fc[str(col)+'_diff']
-
+            # shift series by minimum negative value
+            minval = np.amin(fc[str(col)])
+            fc[str(col)]+=abs(minval)
 
     # cast negative predictions to 0
     #fc[fc<0] = 0
