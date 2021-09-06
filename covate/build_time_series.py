@@ -7,7 +7,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from .utils import getdate, getenddate, createoutputdir
 
-def buildseries(metadata, regions, adm, lineagetype, timeperiod, enddate, output, validate):
+def buildseries(metadata, regions, adm, lineagetype, timeperiod, enddate, output, nsteps, validate):
     """ Build the time series for lineages common to specified regions"""
 
     # load metadata and index by date
@@ -17,7 +17,7 @@ def buildseries(metadata, regions, adm, lineagetype, timeperiod, enddate, output
     df[adm] = df[adm].astype(str)
 
     # select time period
-    df, enddate = gettimeperiod(df, timeperiod, enddate, validate)
+    df, enddate = gettimeperiod(df, timeperiod, enddate, nsteps, validate)
 
     # get region list
     region_list = [str(region) for region in regions.split(', ')]
@@ -71,7 +71,7 @@ def buildseries(metadata, regions, adm, lineagetype, timeperiod, enddate, output
     return countbydate, lineagecommon, region_list, enddate
 
 
-def gettimeperiod(dataframe, timeperiod, enddate, validate):
+def gettimeperiod(dataframe, timeperiod, enddate, nsteps, validate):
     """Extract time period from metadata specified by --time-period"""
 
     # if enddate is not specified, get the most recent date in metadata and -7 days
@@ -84,7 +84,8 @@ def gettimeperiod(dataframe, timeperiod, enddate, validate):
     if not validate:
         startdate = enddate - relativedelta(weeks=+int(timeperiod))
     else:
-        startdate = enddate - relativedelta(weeks=+int(timeperiod)+2)
+        startdate = enddate - relativedelta(weeks=+int(timeperiod))
+        startdate = startdate - relativedelta(days=+int(nsteps))
 
     # get range of dates
     dataframe = dataframe.sort_index().loc[str(startdate):str(enddate)]

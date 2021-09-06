@@ -10,11 +10,11 @@ import scipy.stats as stats
 import matplotlib.pyplot as plt
 from .utils import appendline, pairwise, getdate, getenddate
 
-def buildmodel(timeseries, lineagelist, regionlist, enddate, output, validate):
+def buildmodel(timeseries, lineagelist, regionlist, enddate, output, maxlags, nsteps, validate):
     """ Run stats tests for each lineage and select model and parameters"""
 
-    maxlag=14
-    nsteps=14
+    maxlag=int(maxlags)
+    nsteps=int(nsteps)
     alpha = 0.05
 
     for lineage in lineagelist:
@@ -273,7 +273,7 @@ def vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nstep
     pred = (pd.DataFrame(forecast.round(0), columns=X_train.columns, index=idx))
 
     # cast negative predictions to zero
-    #pred[pred<0] = 0
+    pred[pred<0] = 0
 
     path = os.path.join(output, str(getenddate(enddate)), lineage, 'prediction')
 
@@ -316,7 +316,7 @@ def vecerrcorrvalid(X_train, X_test, lineage, VECMdeterm, lag, coint_count, regi
     pred = (pd.DataFrame(forecast.round(0), index=X_test.index, columns=X_test.columns))
 
     # cast negative predictions to 0
-    #pred[pred<0] = 0
+    pred[pred<0] = 0
 
     path = os.path.join(output, str(getenddate(enddate)), lineage, 'validation')
 
