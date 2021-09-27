@@ -25,11 +25,11 @@ def buildmodel(timeseries, lineagelist, regionlist, enddate, output, maxlags, ns
         # set log files
         if validate:
             path = os.path.join(output, str(getenddate(enddate)), lineage, 'logs/validation')
-            filename = path + '/' + lineage + '_log.txt'
+            filename = path + '/' + lineage
             errorlog = os.path.join(output, str(getenddate(enddate)), 'error_log_validation.txt')
         else:
             path = os.path.join(output, str(getenddate(enddate)), lineage, 'logs/prediction')
-            filename = path + '/' + lineage + '_log.txt'
+            filename = path + '/' + lineage
             errorlog = os.path.join(output, str(getenddate(enddate)), 'error_log_prediction.txt')
 
         # filter timeseries by lineage
@@ -57,7 +57,7 @@ def buildmodel(timeseries, lineagelist, regionlist, enddate, output, maxlags, ns
             for loc1, loc2 in pairwise(regionlist):
                 grangercausality(X_train, lineage, loc1, loc2, maxlag, alpha, filename, errorlog)
         except statserror.InfeasibleTestError:
-            appendline(filename, 'ERROR: Cannot run Granger causality test for ' + str(loc2) +  '-> ' + str(loc1))
+            appendline(filename + '_error.txt', 'ERROR: Cannot run Granger causality test for ' + str(loc2) +  '-> ' + str(loc1))
             appendline(errorlog, str(lineage) + ' ERROR: Cannot run Granger causality test for ' + str(loc2) +  '-> ' + str(loc1))
             continue
 
@@ -65,7 +65,7 @@ def buildmodel(timeseries, lineagelist, regionlist, enddate, output, maxlags, ns
         try:
             lag = lagorder(X_train, lineage, maxlag, filename)
         except np.linalg.LinAlgError:
-            appendline(filename, 'ERROR: Cannot compute lag order')
+            appendline(filename + '_error.txt', 'ERROR: Cannot compute lag order')
             appendline(errorlog, str(lineage) + ' ERROR: Cannot compute lag order')
             continue
 
@@ -99,7 +99,7 @@ def buildmodel(timeseries, lineagelist, regionlist, enddate, output, maxlags, ns
                 coint_count = 0
 
         except np.linalg.LinAlgError:
-            appendline(filename, 'ERROR: Cannot run cointegration test')
+            appendline(filename + '_error.txt', 'ERROR: Cannot run cointegration test')
             appendline(errorlog, str(lineage) + ' ERROR: Cannot run cointegration test')
             continue
 
@@ -108,7 +108,7 @@ def buildmodel(timeseries, lineagelist, regionlist, enddate, output, maxlags, ns
             # if lineage has cointegration, then run VECM
             if VECMdeterm:
 
-                appendline(filename, 'Lineage has cointegration => Run VECM')
+                appendline(filename + '_model.txt', 'Lineage has cointegration => Run VECM')
 
                 if not validate:
                     vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nsteps, alpha, filename, output, errorlog, enddate)
@@ -118,7 +118,7 @@ def buildmodel(timeseries, lineagelist, regionlist, enddate, output, maxlags, ns
             # else check for stationarity and difference then run VAR
             else:
 
-                appendline(filename, 'Lineage has no cointegration => Run VAR')
+                appendline(filename + '_model.txt', 'Lineage has no cointegration => Run VAR')
 
                 if not validate:
                     vecautoreg(X_train, lineage, maxlag, regionlist, nsteps, alpha, filename, output, errorlog, enddate)
@@ -126,7 +126,7 @@ def buildmodel(timeseries, lineagelist, regionlist, enddate, output, maxlags, ns
                     vecautoregvalid(X_train, X_test, lineage, maxlag, regionlist, nsteps, alpha, filename, output, errorlog, enddate)
 
         except (np.linalg.LinAlgError) as e:
-            appendline(filename, 'ERROR: Cannot build model')
+            appendline(filename + '_error.txt', 'ERROR: Cannot build model')
             appendline(errorlog, str(lineage) + ' ERROR: Cannot build model')
             continue
 
@@ -135,17 +135,17 @@ def checkdistribution(X_train, lineage, alpha, filename):
 
     for name, col in X_train.iteritems():
         stat, pvalue = stats.normaltest(col)
-        appendline(filename, 'Information on distribution for ' + str(name))
-        appendline(filename, 'Stat = ' + str(round(stat, 4)))
-        appendline(filename, 'p-value = ' + str(round(pvalue, 4)))
+        appendline(filename + '_distribution.txt', 'Information on distribution for ' + str(name))
+        appendline(filename + '_distribution.txt', 'Stat = ' + str(round(stat, 4)))
+        appendline(filename + '_distribution.txt', 'p-value = ' + str(round(pvalue, 4)))
         if pvalue <= alpha:
-            appendline(filename, '=> Data looks non-Gaussian')
+            appendline(filename + '_distribution.txt', '=> Data looks non-Gaussian')
         else:
-            appendline(filename, '=> Data looks Gaussian')
+            appendline(filename + '_distribution.txt', '=> Data looks Gaussian')
         stat_kur = stats.kurtosis(col)
         stat_skew = stats.skew(col)
-        appendline(filename, 'Kurtosis = ' + str(round(stat_kur, 4)))
-        appendline(filename, 'Skewness = ' + str(round(stat_skew, 4)))
+        appendline(filename + '_distribution.txt', 'Kurtosis = ' + str(round(stat_kur, 4)))
+        appendline(filename + '_distribution.txt', 'Skewness = ' + str(round(stat_skew, 4)))
 
 
 def plotautocorr(X_train, lineage, maxlag, output, enddate, folder):
@@ -174,10 +174,10 @@ def grangercausality(X_train, lineage, loc1, loc2, maxlag, alpha, filename, erro
     p_values = [test_result[lag+1][0][test][1:3] for lag in range(maxlag)]
     min_p_value = min(p_values, key=lambda x: x[0])
 
-    appendline(filename, 'Granger causality test result for ' + str(loc2) + '->' + str(loc1) + "\n" + 'minimum p-value = ' + str(round(min_p_value[0], 4)) + ' =>  ' + str(min_p_value[0] <= alpha))
+    appendline(filename + '_directional.txt', 'Granger causality test result for ' + str(loc2) + '->' + str(loc1) + "\n" + 'minimum p-value = ' + str(round(min_p_value[0], 4)) + ' =>  ' + str(min_p_value[0] <= alpha))
 
     if min_p_value[0] >= alpha:
-        appendline(filename, 'WARN: No Granger causality for ' + str(loc2) + '->' + str(loc1))
+        appendline(filename + '_error.txt', 'WARN: No Granger causality for ' + str(loc2) + '->' + str(loc1))
         appendline(errorlog, str(lineage) + ' WARN: No Granger causality for ' + str(loc2) + '->' + str(loc1))
 
 
@@ -188,7 +188,7 @@ def lagorder(X_train, lineage, maxlag, filename):
     lagorder = varmodel.select_order(maxlag)
     lag = int(lagorder.aic)
 
-    appendline(filename, lagorder.summary().as_text())
+    appendline(filename + '_model.txt', lagorder.summary().as_text())
 
     return lag
 
@@ -217,7 +217,7 @@ def cointegration(X_train, lineage, regionlist, lag, determ, filename):
                 runVECM = 'lo'
             elif determ == -1:
                 runVECM = 'nc'
-    appendline(filename, 'Cointegration rank for ' + str(determ) + ' at lag ' + str(lag) + ' = ' + str(count_coint))
+    appendline(filename + '_model.txt', 'Cointegration rank for ' + str(determ) + ' at lag ' + str(lag) + ' = ' + str(count_coint))
 
     return runVECM, count_coint
 
@@ -230,16 +230,16 @@ def adfullertest(X_train, lineage, alpha, filename):
         stat = adfuller(col, autolag ="AIC")
         out = {'test_statistic':round(stat[0], 4), 'pvalue':round(stat[1], 4), 'n_lags':round(stat[2], 4), 'n_obs':stat[3]}
         p_value = out['pvalue']
-        appendline(filename, 'Augmented Dickey-Fuller Test for ' + str(name))
-        appendline(filename, 'Test Statistic = ' + str(out["test_statistic"]))
-        appendline(filename, 'No. Lags Chosen = ' + str(out["n_lags"]))
+        appendline(filename + '_model.txt', 'Augmented Dickey-Fuller Test for ' + str(name))
+        appendline(filename + '_model.txt', 'Test Statistic = ' + str(out["test_statistic"]))
+        appendline(filename + '_model.txt', 'No. Lags Chosen = ' + str(out["n_lags"]))
         if p_value <= alpha:
-            appendline(filename, '=> P-Value = ' +  str(p_value) + ' => Reject Null Hypothesis')
-            appendline(filename, '=> Series is Stationary')
+            appendline(filename + '_model.txt', '=> P-Value = ' +  str(p_value) + ' => Reject Null Hypothesis')
+            appendline(filename + '_model.txt', '=> Series is Stationary')
             adf_result.append(True)
         else:
-            appendline(filename, '=> P-Value = ' + str(p_value))
-            appendline(filename, '=> Series is Non-Stationary')
+            appendline(filename + '_model.txt', '=> P-Value = ' + str(p_value))
+            appendline(filename + '_model.txt', '=> Series is Non-Stationary')
             adf_result.append(False)
 
     return adf_result
@@ -258,9 +258,9 @@ def vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nstep
     vecm_fit = vecm.fit()
 
     try:
-        appendline(filename, vecm_fit.summary().as_text())
+        appendline(filename + '_model.txt', vecm_fit.summary().as_text())
     except IndexError:
-        appendline(filename, 'WARN: Failed to create VECM summary')
+        appendline(filename + '_error.txt', 'WARN: Failed to create VECM summary')
         appendline(errorlog, str(lineage) + ' WARN: Failed to create VECM summary')
 
     vecm_fit.predict(steps=nsteps)
@@ -304,9 +304,9 @@ def vecerrcorrvalid(X_train, X_test, lineage, VECMdeterm, lag, coint_count, regi
     vecm_fit = vecm.fit()
 
     try:
-        appendline(filename, vecm_fit.summary().as_text())
+        appendline(filename + '_model.txt', vecm_fit.summary().as_text())
     except IndexError:
-        appendline(filename, 'WARN: Failed to create VECM summary')
+        appendline(filename + '_error.txt', 'WARN: Failed to create VECM summary')
         appendline(errorlog, str(lineage) + ' WARN: Failed to create VECM summary')
 
     vecm_fit.predict(steps=nsteps)
@@ -334,6 +334,17 @@ def vecerrcorrvalid(X_train, X_test, lineage, VECMdeterm, lag, coint_count, regi
         plt.clf()
         plt.close()
 
+    # create prediction/actual dataframe and save to csv
+    for region in regionlist:
+        oldname = str(lineage) + '_' + str(region)
+        predname = str(lineage) + '_' + str(region) + '_prediction'
+        actname = str(lineage) + '_' + str(region) + '_actual'
+        pred.rename(columns={oldname : predname}, inplace=True)
+        X_test.rename(columns={oldname : actname}, inplace=True)
+
+    predact = pred.join(X_test)
+    predact.to_csv(filename + '_validation.csv')
+
 
 def vecautoreg(X_train, lineage, maxlag, regionlist, nsteps, alpha, filename, output, errorlog, enddate):
     """ Build VAR model"""
@@ -355,12 +366,12 @@ def vecautoreg(X_train, lineage, maxlag, regionlist, nsteps, alpha, filename, ou
 
         VARdiff = 'first'
 
-        appendline(filename, 'Series has been first differenced')
+        appendline(filename + '_model.txt', 'Series has been first differenced')
 
     # add warn message if series is still not stationary
     if False in adf_result:
 
-        appendline(filename, 'WARN: Series is not stationary')
+        appendline(filename + '_error.txt', 'WARN: Series is not stationary')
 
         appendline(errorlog, str(lineage) + ' WARN: Series is not stationary')
 
@@ -446,12 +457,12 @@ def vecautoregvalid(X_train, X_test, lineage, maxlag, regionlist, nsteps, alpha,
 
         VARdiff = 'first'
 
-        appendline(filename, 'Series has been first differenced')
+        appendline(filename + '_model.txt', 'Series has been first differenced')
 
     # add warn message if series is still not stationary
     if False in adf_result:
 
-        appendline(filename, 'WARN: Series is not stationary')
+        appendline(filename + '_error.txt', 'WARN: Series is not stationary')
 
         appendline(errorlog, str(lineage) + ' WARN: Series is not stationary')
 
@@ -499,6 +510,7 @@ def vecautoregvalid(X_train, X_test, lineage, maxlag, regionlist, nsteps, alpha,
 
     path = os.path.join(output, str(getenddate(enddate)), lineage, 'validation')
 
+    # plot prediction and actual time series
     for region in regionlist:
         plt.plot(fc[lineage + '_' + region], color='r', label='prediction')
         plt.plot(X_test[lineage + '_' + region], color='b',  label='actual')
@@ -512,3 +524,16 @@ def vecautoregvalid(X_train, X_test, lineage, maxlag, regionlist, nsteps, alpha,
         plt.savefig(path + '/' + lineage + '_' + region + '_VAR_validation.png')
         plt.clf()
         plt.close()
+
+    # create prediction/actual dataframe and save to csv
+    for region in regionlist:
+        oldname = str(lineage) + '_' + str(region)
+        predname = str(lineage) + '_' + str(region) + '_prediction'
+        actname = str(lineage) + '_' + str(region) + '_actual'
+        fc.rename(columns={oldname : predname}, inplace=True)
+        X_test.rename(columns={oldname : actname}, inplace=True)
+        fc.drop(columns=[oldname + '_diff'], inplace=True)
+
+    predact = fc.join(X_test)
+    predact.to_csv(filename + '_validation.csv')
+
