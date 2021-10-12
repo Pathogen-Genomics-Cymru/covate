@@ -44,7 +44,7 @@ def buildmodel(timeseries, lineagelist, regionlist, enddate, output, maxlags, ns
             X_train, X_test = X_train[0:-nsteps], X_train[-nsteps:]
 
         # get basic information on timeseries
-        checkdistribution(X_train, lineage, alpha, filename)
+        checkdistribution(X_train, lineage, filename, errorlog)
 
         # plot the autocorrelation
         if validate:
@@ -130,22 +130,16 @@ def buildmodel(timeseries, lineagelist, regionlist, enddate, output, maxlags, ns
             appendline(errorlog, str(lineage) + ' ERROR: Cannot build model')
             continue
 
-def checkdistribution(X_train, lineage, alpha, filename):
-    """Get information about distribution"""
+def checkdistribution(X_train, lineage, filename, errorlog):
+    """check distribution for null values"""
 
     for name, col in X_train.iteritems():
-        stat, pvalue = stats.normaltest(col)
-        appendline(filename + '_distribution.txt', 'Information on distribution for ' + str(name))
-        appendline(filename + '_distribution.txt', 'Stat = ' + str(round(stat, 4)))
-        appendline(filename + '_distribution.txt', 'p-value = ' + str(round(pvalue, 4)))
-        if pvalue <= alpha:
-            appendline(filename + '_distribution.txt', '=> Data looks non-Gaussian')
-        else:
-            appendline(filename + '_distribution.txt', '=> Data looks Gaussian')
-        stat_kur = stats.kurtosis(col)
-        stat_skew = stats.skew(col)
-        appendline(filename + '_distribution.txt', 'Kurtosis = ' + str(round(stat_kur, 4)))
-        appendline(filename + '_distribution.txt', 'Skewness = ' + str(round(stat_skew, 4)))
+        nonzero = np.count_nonzero(col)
+        percent_missing = 100 - (nonzero*100 / len(col))
+
+        if percent_missing >= 75:
+            appendline(filename + '_error.txt', 'WARN: ' + str(name) + ' has over 75% null values')
+            appendline(errorlog, str(lineage) + ' WARN: ' + str(name) + ' has over 75% null values')
 
 
 def plotautocorr(X_train, lineage, maxlag, output, enddate, folder):
@@ -174,7 +168,7 @@ def grangercausality(X_train, lineage, loc1, loc2, maxlag, alpha, filename, erro
     p_values = [test_result[lag+1][0][test][1:3] for lag in range(maxlag)]
     min_p_value = min(p_values, key=lambda x: x[0])
 
-    appendline(filename + '_directional.txt', 'Granger causality test result for ' + str(loc2) + '->' + str(loc1) + "\n" + 'minimum p-value = ' + str(round(min_p_value[0], 4)) + ' =>  ' + str(min_p_value[0] <= alpha))
+    appendline(filename + '_model.txt', 'Granger causality test result for ' + str(loc2) + '->' + str(loc1) + "\n" + 'minimum p-value = ' + str(round(min_p_value[0], 4)) + ' =>  ' + str(min_p_value[0] <= alpha))
 
     if min_p_value[0] >= alpha:
         appendline(filename + '_error.txt', 'WARN: No Granger causality for ' + str(loc2) + '->' + str(loc1))
