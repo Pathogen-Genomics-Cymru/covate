@@ -39,7 +39,7 @@ def buildseries(metadata, regions, adm, lineagetype, timeperiod, enddate, output
     # get column names for lineages and convert to numeric
     lineage_adm_cols=[item for item in countbydate.columns if item not in ["sample_date"]]
     for col in lineage_adm_cols:
-        countbydate[col]=pd.to_numeric(countbydate[col])
+        countbydate[col]=pd.to_numeric(countbydate[col], downcast="integer")
 
     # only keep lineages found in at least two regions
     lineagecommon = []
