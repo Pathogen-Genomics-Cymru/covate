@@ -9,6 +9,8 @@ import numpy as np
 import scipy.stats as stats
 import matplotlib.pyplot as plt
 from .utils import appendline, pairwise, getdate, getenddate
+import warnings
+
 
 def buildmodel(timeseries, lineagelist, regionlist, enddate, output, maxlags, nsteps, validate):
     """ Run stats tests for each lineage and select model and parameters"""
@@ -46,11 +48,15 @@ def buildmodel(timeseries, lineagelist, regionlist, enddate, output, maxlags, ns
         # get basic information on timeseries
         checkdistribution(X_train, lineage, filename, errorlog)
 
-        # plot the autocorrelation
-        if validate:
-            plotautocorr(X_train, lineage, maxlag, output, enddate, 'additional-plots/validation')
-        else:
-            plotautocorr(X_train, lineage, maxlag, output, enddate, 'additional-plots/prediction')
+        # plot the autocorrelation, ignore warnings
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            warnings.simplefilter("ignore", RuntimeWarning)
+
+            if validate:
+                plotautocorr(X_train, lineage, maxlag, output, enddate, 'additional-plots/validation')
+            else:
+                plotautocorr(X_train, lineage, maxlag, output, enddate, 'additional-plots/prediction')
 
         # check for granger causality
         try:
@@ -369,8 +375,13 @@ def vecautoreg(X_train, lineage, maxlag, regionlist, nsteps, alpha, filename, ou
 
         appendline(errorlog, str(lineage) + ' WARN: Series is not stationary')
 
-    # plot autocorrelation again
-    plotautocorr(X_train, lineage, maxlag, output, enddate, 'additional-plots/prediction/VAR')
+    # plot autocorrelation again, ignore warnings
+    with warnings.catch_warnings():
+
+        warnings.simplefilter("ignore", UserWarning)
+        warnings.simplefilter("ignore", RuntimeWarning)
+
+        plotautocorr(X_train, lineage, maxlag, output, enddate, 'additional-plots/prediction/VAR')
 
     # plot series to check it's stationary
     path = os.path.join(output, str(getenddate(enddate)), lineage, 'additional-plots/prediction/VAR')
@@ -460,8 +471,13 @@ def vecautoregvalid(X_train, X_test, lineage, maxlag, regionlist, nsteps, alpha,
 
         appendline(errorlog, str(lineage) + ' WARN: Series is not stationary')
 
-    # plot autocorrelation again
-    plotautocorr(X_train, lineage, maxlag, output, enddate, 'additional-plots/validation/VAR')
+    # plot autocorrelation again, ignore warnings
+    with warnings.catch_warnings():
+
+        warnings.simplefilter("ignore", UserWarning)
+        warnings.simplefilter("ignore", RuntimeWarning)
+
+        plotautocorr(X_train, lineage, maxlag, output, enddate, 'additional-plots/validation/VAR')
 
     # plot series to check it's stationary
     path = os.path.join(output, str(getenddate(enddate)), lineage, 'additional-plots/validation/VAR')
