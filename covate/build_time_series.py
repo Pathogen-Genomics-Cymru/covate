@@ -12,6 +12,7 @@ def buildseries(metadata, regions, adm, lineagetype, timeperiod, enddate, output
 
     # load metadata and index by date
     df = pd.read_csv(metadata, usecols=['central_sample_id', adm, 'sample_date', lineagetype], parse_dates=['sample_date'], index_col='sample_date', dayfirst=True)
+    df.replace(['None'], np.nan, inplace=True)
     df.dropna(inplace=True)
     df[lineagetype] = df[lineagetype].astype(str)
     df[adm] = df[adm].astype(str)
