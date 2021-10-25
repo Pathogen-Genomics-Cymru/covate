@@ -23,12 +23,12 @@ optional arguments:
   -h, --help            show this help message and exit
   -i METADATA, --input-csv METADATA
                         Input metadata csv, expects columns:
-                        central_sample_id, adm1/adm2, sample_date,
+                        cog_id, adm1/adm2, sample_date,
                         lineage/uk_lineage
   -o OUTPUT, --output-dir OUTPUT
                         Output directory for the results
   -r REGIONS, --region-list REGIONS
-                        Input list of regions to compare, e.g. UK-WLS, UK-ENG
+                        Input list of regions to compare, e.g. Wales, England
   -a ADM, --adm ADM     Select either adm1 or adm2
   -l LINEAGETYPE, --lineage-type LINEAGETYPE
                         Select either lineage or uk_lineage
@@ -45,9 +45,9 @@ optional arguments:
 ```
 
 ### Arguments ###
-* **--input-csv** <br /> Input metadata csv. The following columns are required: **central_sample_id, adm1/adm2, sample_date, lineage/uk_lineage**
+* **--input-csv** <br /> Input metadata csv. The following columns are required: **cog_id, adm1/adm2, sample_date, lineage/uk_lineage**
 * **--output-dir** <br /> Output directory for results
-* **--region-list** <br /> Input list of regions to compare. Default **UK-WLS, UK-ENG**
+* **--region-list** <br /> Input list of regions to compare. Default **Wales, England**
 * **--adm** <br /> Select adm the regions belong to (adm1 or adm2). Default **adm1**
 * **--lineage-type** <br /> Select whether to compare global or uk lineages (lineage or uk_lineage). Default **uk_lineage**
 * **--time-period** <br /> Select time period in weeks to take from the input metadata csv. Default **12**

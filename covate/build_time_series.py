@@ -11,11 +11,12 @@ def buildseries(metadata, regions, adm, lineagetype, timeperiod, enddate, output
     """ Build the time series for lineages common to specified regions"""
 
     # load metadata and index by date
-    df = pd.read_csv(metadata, usecols=['central_sample_id', adm, 'sample_date', lineagetype], parse_dates=['sample_date'], index_col='sample_date', dayfirst=True)
-    df.replace(['None'], np.nan, inplace=True)
-    df.dropna(inplace=True)
+    df = pd.read_csv(metadata, usecols=['cog_id', adm, 'sample_date', lineagetype], parse_dates=['sample_date'], index_col='sample_date', dayfirst=True)
     df[lineagetype] = df[lineagetype].astype(str)
     df[adm] = df[adm].astype(str)
+    df['cog_id'] = df['cog_id'].astype(str)
+    df.replace(['None', 'nan'], np.nan, inplace=True)
+    df.dropna(inplace=True)
 
     # select time period
     df, enddate = gettimeperiod(df, timeperiod, enddate, nsteps, validate)
@@ -33,7 +34,7 @@ def buildseries(metadata, regions, adm, lineagetype, timeperiod, enddate, output
     df['lineage_adm'] = df[[lineagetype, adm]].apply(lambda x: '_'.join(x), axis=1)
 
     # get the lineage count by date in each region
-    groupdf = df.groupby('lineage_adm').resample('D')['central_sample_id'].count().reset_index(name="count")
+    groupdf = df.groupby('lineage_adm').resample('D')['cog_id'].count().reset_index(name="count")
     countbydate = groupdf.pivot_table('count', ['sample_date'], 'lineage_adm')
     countbydate.replace([np.nan], '0', inplace=True)
 
