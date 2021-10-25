@@ -21,8 +21,8 @@ def main():
                         help="Select time period in weeks to take from metadata")
     parser.add_argument("-e", "--end-date", dest="enddate", required=False, default="",
                         help="Select end date to take from metadata. Format: d/m/Y")
-    parser.add_argument("-v", "--validate", dest="validate", type=bool, required=False, default="True",
-                        help="Run validation forecast. True or False")
+    parser.add_argument("-v", "--validate", dest="validate", required=False, action="store_true",
+                        help="Run validation forecast")
     parser.add_argument("-m", "--max-lags", dest="maxlags", required=False, default="14",
                         help="Maximum number of lags to investigate")
     parser.add_argument("-n", "--n-steps", dest="nsteps", required=False, default="14",
