@@ -7,7 +7,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from .utils import getdate, getenddate, createoutputdir
 
-def buildseries(metadata, regions, adm, lineagetype, timeperiod, enddate, output, nsteps, validate):
+def buildseries(metadata, regions, adm, lineagetype, timeperiod, enddate, output, nsteps, validate, crosscorr, primaryregion):
     """ Build the time series for lineages common to specified regions"""
 
     # load metadata and index by date
@@ -70,6 +70,10 @@ def buildseries(metadata, regions, adm, lineagetype, timeperiod, enddate, output
         # plot time series and lag plot
         plotseries(countbydate, lineagecommon, region_list, output, enddate)
 
+    # if cross-correlation True
+    if crosscorr:
+        plottopseries(df, lineagecommon, region_list, output, enddate, adm, lineagetype, primaryregion, 40)
+
     return countbydate, lineagecommon, region_list, enddate
 
 
@@ -116,6 +120,89 @@ def plotseries(dataframe, lineagelist, regionlist, output, enddate):
         plt.savefig(path + '/' + lineage + '_timeseries.png')
         plt.clf()
         plt.close(fig)
+
+
+def plottopseries(dataframe, lineagelist, regionlist, output, enddate, adm, lineage, primaryregion, num):
+    """Plot the top $num time series"""
+
+    colors = ['slategrey', 'maroon', 'g', 'm', 'c', 'y']
+    ncolor=0
+
+    path = os.path.join(output, str(getenddate(enddate)))
+
+    # set scale for points in fig
+    scalepoint = 0.75
+
+    # initialise figure
+    fig, ax = plt.subplots()
+    fig.set_size_inches(14, 18)
+    ax.set_xlabel("Date collected")
+    ax.set_ylabel("Lineage")
+    ax.set_axisbelow(True)
+    ax.grid()
+
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0 + box.height * 0.1,
+                 box.width, box.height * 0.9])
+
+    # reorder list by country with most cases
+    counts = dataframe[adm].value_counts()
+
+    ascendregionlist = []
+    for elem in range(0, len(regionlist)):
+        ascendregionlist.append(str(counts.index[elem]))
+
+    # get dataframe for primary region
+    primaryregionframe = dataframe[dataframe[adm].str.match(primaryregion)]
+    primaryregionframe = primaryregionframe.reset_index()
+
+    # get lineage counts for primary region
+    lineageregioncount = primaryregionframe.groupby([lineage]).size().reset_index(name='counts')
+    lineageregioncount.sort_values('counts', ascending=False, inplace=True)
+    lineageregioncount.to_csv(path + '/' + primaryregion + '_lineagefreq.csv', sep=',')
+
+    # get top $num lineages
+    rownum = int(num) - 1
+    toplineagelist = lineageregioncount[lineage].iloc[0:rownum]
+
+    for region in ascendregionlist:
+
+        regionframe = dataframe[dataframe[adm].str.match(region)]
+        regionframe = regionframe.reset_index()
+
+        regionframe[lineage] = pd.Categorical(regionframe[lineage], categories=toplineagelist)
+
+        regionframe['combine'] = regionframe['sample_date'].astype(str) + "_" + regionframe[lineage].astype(str)
+        regionframe['frequency'] = regionframe['combine'].map(regionframe['combine'].value_counts())
+
+        regionframe.drop_duplicates(subset=['combine'], inplace=True)
+        regionframe.dropna(inplace=True)
+
+        cc = regionframe['frequency'].to_numpy()
+        sc = lambda x : scalepoint*x
+
+        regionframe['sample_date'] = pd.to_datetime(regionframe['sample_date'],format='%Y-%m-%d')
+        regionframe[lineage] = regionframe[lineage].astype(str)
+
+        # plt scatter insists on reading global lineages as floats, replace dot with dash for now 
+        regionframe[lineage] = [x.replace('.', '-') for x in regionframe[lineage].astype(str)]
+
+        plt.scatter(regionframe['sample_date'], regionframe[lineage], s=sc(cc), c=colors[ncolor], marker='o', label=str(region))
+
+        ncolor+=1
+
+    leg = plt.legend(bbox_to_anchor=(0.8, -0.07), frameon=False)
+    ax.add_artist(leg)
+    msizes = [1, 10, 50, 100, 500, 1000, 2000]
+    markers = []
+    for size in msizes:
+        markers.append(plt.scatter([],[], s=scalepoint*size, label=size, c='grey'))
+    leg = plt.legend(bbox_to_anchor=(0.8, -0.07), frameon=False)
+    ax.legend(handles=markers, labelspacing=3, title="Number of cases", loc='upper center', bbox_to_anchor=(0.3, -0.05), frameon=False, ncol=len(msizes))
+
+    plt.savefig(path + '/' + 'allLineages.png', format="png", dpi=300)
+    plt.clf()
+    plt.close(fig)
 
 
 def padseries(dataframe):

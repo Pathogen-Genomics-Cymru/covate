@@ -23,6 +23,10 @@ def main():
                         help="Select end date to take from metadata. Format: d/m/Y")
     parser.add_argument("-v", "--validate", dest="validate", required=False, action="store_true",
                         help="Run validation forecast")
+    parser.add_argument("-c", "--cross-correlation", dest="crosscorr", required=False, action="store_true",
+                        help="Run cross-correaltion analysis")
+    parser.add_argument("-p", "--primary-region", dest="primaryregion", required=False, default="Wales",
+                        help="Region of primary interest for cross-correlation")
     parser.add_argument("-m", "--max-lags", dest="maxlags", required=False, default="14",
                         help="Maximum number of lags to investigate")
     parser.add_argument("-n", "--n-steps", dest="nsteps", required=False, default="14",
@@ -30,7 +34,7 @@ def main():
     args = parser.parse_args()
 
     # build the time series
-    countbydate, lineagecommon, region_list, enddate = buildseries(args.metadata, args.regions, args.adm, args.lineagetype, args.timeperiod, args.enddate, args.output, args.nsteps, False)
+    countbydate, lineagecommon, region_list, enddate = buildseries(args.metadata, args.regions, args.adm, args.lineagetype, args.timeperiod, args.enddate, args.output, args.nsteps, False, args.crosscorr, args.primaryregion)
 
     # build the model
     buildmodel(countbydate, lineagecommon, region_list, enddate, args.output, args.maxlags, args.nsteps, False)
@@ -38,7 +42,7 @@ def main():
     # if validation forecast selected, run again
     if args.validate:
 
-        countbydate, lineagecommon, region_list, enddate = buildseries(args.metadata, args.regions, args.adm, args.lineagetype, args.timeperiod, args.enddate, args.output, args.nsteps, args.validate)
+        countbydate, lineagecommon, region_list, enddate = buildseries(args.metadata, args.regions, args.adm, args.lineagetype, args.timeperiod, args.enddate, args.output, args.nsteps, args.validate, False, args.primaryregion)
 
         buildmodel(countbydate, lineagecommon, region_list, enddate, args.output, args.maxlags, args.nsteps, args.validate)
 
