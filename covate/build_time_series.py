@@ -11,10 +11,7 @@ def buildseries(metadata, regions, adm, lineagetype, timeperiod, enddate, output
     """ Build the time series for lineages common to specified regions"""
 
     # load metadata and index by date
-    df = pd.read_csv(metadata, usecols=['cog_id', adm, 'sample_date', lineagetype], parse_dates=['sample_date'], index_col='sample_date', dayfirst=True)
-    df[lineagetype] = df[lineagetype].astype(str)
-    df[adm] = df[adm].astype(str)
-    df['cog_id'] = df['cog_id'].astype(str)
+    df = pd.read_csv(metadata, usecols=['cog_id', adm, 'sample_date', lineagetype], parse_dates=['sample_date'], index_col='sample_date', dayfirst=True, dtype={'cog_id': str, adm: str, lineagetype: str})
     df.replace(['None', 'nan'], np.nan, inplace=True)
     df.dropna(inplace=True)
 
