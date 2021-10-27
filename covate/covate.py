@@ -3,6 +3,7 @@
 import argparse
 from .build_time_series import buildseries
 from .build_model import buildmodel
+from .cross_correlation import crosscorrelation
 
 def main():
 
@@ -35,6 +36,11 @@ def main():
 
     # build the time series
     countbydate, lineagecommon, region_list, enddate = buildseries(args.metadata, args.regions, args.adm, args.lineagetype, args.timeperiod, args.enddate, args.output, args.nsteps, False, args.crosscorr, args.primaryregion)
+
+    # run cross-correlation analysis
+    if args.crosscorr:
+
+        crosscorrelation(countbydate, lineagecommon, region_list, enddate, args.output, args.primaryregion)
 
     # build the model
     buildmodel(countbydate, lineagecommon, region_list, enddate, args.output, args.maxlags, args.nsteps, False)
