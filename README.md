@@ -1,5 +1,7 @@
 # covate #
-Covate forecasts time series for lineages that are common to a specified list of regions. The selection of either a VAR or VECM model is automated on a per lineage basis, based on the results of a cointegration test. The selection of parameters for the chosen model is also automated.
+Covate uses the COG-UK metadata to forecast time series for lineages of SARS-CoV-2 that are common to a specified list of regions. The selection of either a VAR or VECM model is automated on a per lineage basis, based on the results of a cointegration test. The selection of parameters for the chosen model is also automated.
+
+In addition, covate can also build validation forecasts for existing metadata, and run a cross-correlation analysis that investigates the likelihood of lineages of SARS-CoV-2 being imported between two regions.
 
 ## Install ##
 ```
@@ -8,10 +10,16 @@ Covate forecasts time series for lineages that are common to a specified list of
 
 ## Usage ##
 
-To run with default parameters:
+To run with default arguments:
 ```
 covate -i metadata.csv -o output_dir
 ```
+A validation forecast will also be run if you use the `--validate` flag, and a cross-correlation analysis will be run if you specify `--cross-correlation`. Note the cross-correlation analysis currently only works for two regions. E.g.:
+```
+covate -i metadata.csv -o output_dir --validate --cross-correlation --region-list "Wales, England"
+```
+A full description of the available arguments and their default values can be found below.
+
 
 Help message:
 ```
@@ -64,7 +72,7 @@ optional arguments:
 <img height="600" src="https://github.com/Pathogen-Genomics-Cymru/covate/blob/main/covate-workflow.png" />
 
 ## Output ##
-A date-stamped output directory is created with sub-directories for each common lineage. At the top level you will find a csv of the timeseries and error log files. In a lineage sub-directory you should find the following directories and plots:
+A date-stamped output directory is created with sub-directories for each common lineage and a cross-correlation sub-directory. At the top level you will find a csv of the timeseries and error log file(s). In a lineage sub-directory you should find the following directories and plots:
 * **prediction** The forecasted time series for each region.
 * **validation** A validation forecast for each region (plots the time series for the last nsteps prior to the set end date with a forecast). This directory will be empty if --validate is not specified.
 * **logs** Log files containing information on the time series and the built models. If there are any errors raised for the lineage then an error log will also be generated. There are separate log files for prediction and validation.
