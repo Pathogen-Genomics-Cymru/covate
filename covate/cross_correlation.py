@@ -8,12 +8,12 @@ from matplotlib.offsetbox import AnchoredText
 import os
 from .utils import getdate, getenddate
 
-def crosscorrelation(timeseries, lineagelist, regionlist, enddate, output, primaryregion):
+def crosscorrelation(timeseries, lineagelist, regionlist, enddate, output, primaryregion, toplineagelist):
 
-    laggedcorr(timeseries, lineagelist, regionlist, enddate, output, primaryregion)
+    laggedcorr(timeseries, lineagelist, regionlist, enddate, output, primaryregion, toplineagelist)
 
 
-def laggedcorr(timeseries, lineagelist, regionlist, enddate, output, primaryregion):
+def laggedcorr(timeseries, lineagelist, regionlist, enddate, output, primaryregion, toplineagelist):
 
     path = os.path.join(output, str(getenddate(enddate)), 'cross-correlation')
 
@@ -26,7 +26,7 @@ def laggedcorr(timeseries, lineagelist, regionlist, enddate, output, primaryregi
     secondregion = str(seclist[0])
 
     appended_data = []
-    for lineage in lineagelist:
+    for lineage in toplineagelist:
         primcol = str(lineage) + "_" + str(primaryregion)
         seccol = str(lineage) + "_" + str(secondregion)
         data = pd.concat([timeseries[seccol], timeseries[primcol]], axis=1)
@@ -61,7 +61,10 @@ def laggedcorr(timeseries, lineagelist, regionlist, enddate, output, primaryregi
     ax1.set_ylabel('Lineage Count', fontsize=12)
     ax1.set_xlabel('Lag (days)', fontsize=12)
     ax1.set_xlim(left=-32, right=32)
-    ax1.annotate('(b)', xy=(-30, 7.5), fontsize=14)
+    at = AnchoredText("(b)", frameon=False,
+                  prop=dict(size=14), loc='upper left',
+                  )
+    ax1.add_artist(at)
 
     ax2 = fig.add_subplot(gs[1, 1:])
     ax2.hist(max_combine_05.iloc[:,0], bins = bins_list, color = "slategrey")
@@ -69,8 +72,11 @@ def laggedcorr(timeseries, lineagelist, regionlist, enddate, output, primaryregi
     ax2.set_ylabel('Lineage Count', fontsize=14)
     ax2.set_xlabel('Lag (days)', fontsize=14)
     ax2.set_xticks(x_ticks)
-    ax2.set_xlim(left=-31, right=26)
-    ax2.annotate('(c)',  xy=(-30, 5.5), fontsize=14)
+    ax2.set_xlim(left=-31, right=31)
+    at = AnchoredText("(c)", frameon=False,
+                  prop=dict(size=14), loc='upper left',
+                  )
+    ax2.add_artist(at)
 
     ax3 = fig.add_subplot(gs[0, :])
     appended_data.boxplot()

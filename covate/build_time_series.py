@@ -68,10 +68,11 @@ def buildseries(metadata, regions, adm, lineagetype, timeperiod, enddate, output
         plotseries(countbydate, lineagecommon, region_list, output, enddate)
 
     # if cross-correlation True
+    toplineagelist = []
     if crosscorr:
-        plottopseries(df, lineagecommon, region_list, output, enddate, adm, lineagetype, primaryregion, 40)
+        toplineagelist = plottopseries(df, lineagecommon, region_list, output, enddate, adm, lineagetype, primaryregion, 40)
 
-    return countbydate, lineagecommon, region_list, enddate
+    return countbydate, lineagecommon, region_list, enddate, toplineagelist
 
 
 def gettimeperiod(dataframe, timeperiod, enddate, nsteps, validate):
@@ -158,8 +159,10 @@ def plottopseries(dataframe, lineagelist, regionlist, output, enddate, adm, line
     lineageregioncount.sort_values('counts', ascending=False, inplace=True)
     lineageregioncount.to_csv(path + '/' + primaryregion + '_lineagefreq.csv', sep=',', index=False)
 
-    # get top $num lineages
-    rownum = int(num) - 1
+    # get top $num lineages that are common to all regions
+    rownum = int(num)
+    lineageregioncount[lineage] = pd.Categorical(lineageregioncount[lineage], categories=lineagelist)
+    lineageregioncount.dropna(inplace=True)
     toplineagelist = lineageregioncount[lineage].iloc[0:rownum]
 
     for region in ascendregionlist:
@@ -200,6 +203,8 @@ def plottopseries(dataframe, lineagelist, regionlist, output, enddate, adm, line
     plt.savefig(path + '/' + 'allLineages.png', format="png", dpi=300)
     plt.clf()
     plt.close(fig)
+
+    return toplineagelist
 
 
 def padseries(dataframe):

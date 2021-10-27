@@ -35,12 +35,12 @@ def main():
     args = parser.parse_args()
 
     # build the time series
-    countbydate, lineagecommon, region_list, enddate = buildseries(args.metadata, args.regions, args.adm, args.lineagetype, args.timeperiod, args.enddate, args.output, args.nsteps, False, args.crosscorr, args.primaryregion)
+    countbydate, lineagecommon, region_list, enddate, toplineagelist = buildseries(args.metadata, args.regions, args.adm, args.lineagetype, args.timeperiod, args.enddate, args.output, args.nsteps, False, args.crosscorr, args.primaryregion)
 
     # run cross-correlation analysis
     if args.crosscorr:
 
-        crosscorrelation(countbydate, lineagecommon, region_list, enddate, args.output, args.primaryregion)
+        crosscorrelation(countbydate, lineagecommon, region_list, enddate, args.output, args.primaryregion, toplineagelist)
 
     # build the model
     buildmodel(countbydate, lineagecommon, region_list, enddate, args.output, args.maxlags, args.nsteps, False)
@@ -48,7 +48,7 @@ def main():
     # if validation forecast selected, run again
     if args.validate:
 
-        countbydate, lineagecommon, region_list, enddate = buildseries(args.metadata, args.regions, args.adm, args.lineagetype, args.timeperiod, args.enddate, args.output, args.nsteps, args.validate, False, args.primaryregion)
+        countbydate, lineagecommon, region_list, enddate, toplineagelist = buildseries(args.metadata, args.regions, args.adm, args.lineagetype, args.timeperiod, args.enddate, args.output, args.nsteps, args.validate, False, args.primaryregion)
 
         buildmodel(countbydate, lineagecommon, region_list, enddate, args.output, args.maxlags, args.nsteps, args.validate)
 
