@@ -16,15 +16,14 @@ covate -i metadata.csv -o output_dir
 Help message:
 ```
 usage: covate [-h] -i METADATA -o OUTPUT [-r REGIONS] [-a ADM]
-              [-l LINEAGETYPE] [-t TIMEPERIOD] [-e ENDDATE] [-v VALIDATE]
-              [-m MAXLAGS] [-n NSTEPS]
+              [-l LINEAGETYPE] [-t TIMEPERIOD] [-e ENDDATE] [-v] [-c]
+              [-p PRIMARYREGION] [-m MAXLAGS] [-n NSTEPS]
 
 optional arguments:
   -h, --help            show this help message and exit
   -i METADATA, --input-csv METADATA
-                        Input metadata csv, expects columns:
-                        cog_id, adm1/adm2, sample_date,
-                        lineage/uk_lineage
+                        Input metadata csv, expects columns: cog_id,
+                        adm1/adm2, sample_date, lineage/uk_lineage
   -o OUTPUT, --output-dir OUTPUT
                         Output directory for the results
   -r REGIONS, --region-list REGIONS
@@ -36,8 +35,11 @@ optional arguments:
                         Select time period in weeks to take from metadata
   -e ENDDATE, --end-date ENDDATE
                         Select end date to take from metadata. Format: d/m/Y
-  -v VALIDATE, --validate VALIDATE
-                        Run validation forecast
+  -v, --validate        Run validation forecast
+  -c, --cross-correlation
+                        Run cross-correlation analysis
+  -p PRIMARYREGION, --primary-region PRIMARYREGION
+                        Region of primary interest for cross-correlation
   -m MAXLAGS, --max-lags MAXLAGS
                         Maximum number of lags to investigate
   -n NSTEPS, --n-steps NSTEPS
@@ -53,6 +55,8 @@ optional arguments:
 * **--time-period** <br /> Select time period in weeks to take from the input metadata csv. Default **12**
 * **--end-date** <br /> The end date of the time period to take from the input metadata csv. Expected format is d/m/Y, e.g. 31/7/2021. Default **latest date in the metadata -7 days** (to account for lag in data)
 * **--validate** <br /> If specified, validation forecasts will be created
+* **--cross-correlation** <br /> If specifed, cross-correlation analysis will be run
+* **--primary-region** <br /> Primary region for cross-correlation analysis. Default **Wales**
 * **--max-lags** <br /> Select maximum number of lags to investigate. Default **14**
 * **--n-steps** <br /> Number of days to predict. Default **14**
 
