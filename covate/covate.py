@@ -25,7 +25,7 @@ def main():
     parser.add_argument("-v", "--validate", dest="validate", required=False, action="store_true",
                         help="Run validation forecast")
     parser.add_argument("-c", "--cross-correlation", dest="crosscorr", required=False, action="store_true",
-                        help="Run cross-correaltion analysis")
+                        help="Run cross-correlation analysis")
     parser.add_argument("-p", "--primary-region", dest="primaryregion", required=False, default="Wales",
                         help="Region of primary interest for cross-correlation")
     parser.add_argument("-m", "--max-lags", dest="maxlags", required=False, default="14",
