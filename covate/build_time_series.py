@@ -128,7 +128,7 @@ def plottopseries(dataframe, lineagelist, regionlist, output, enddate, adm, line
     colors = ['slategrey', 'maroon', 'g', 'm', 'c', 'y']
     ncolor=0
 
-    path = os.path.join(output, str(getenddate(enddate)))
+    path = os.path.join(output, str(getenddate(enddate)), 'cross-correlation')
 
     # set scale for points in fig
     scalepoint = 0.75
@@ -159,7 +159,7 @@ def plottopseries(dataframe, lineagelist, regionlist, output, enddate, adm, line
     # get lineage counts for primary region
     lineageregioncount = primaryregionframe.groupby([lineage]).size().reset_index(name='counts')
     lineageregioncount.sort_values('counts', ascending=False, inplace=True)
-    lineageregioncount.to_csv(path + '/' + primaryregion + '_lineagefreq.csv', sep=',')
+    lineageregioncount.to_csv(path + '/' + primaryregion + '_lineagefreq.csv', sep=',', index=False)
 
     # get top $num lineages
     rownum = int(num) - 1

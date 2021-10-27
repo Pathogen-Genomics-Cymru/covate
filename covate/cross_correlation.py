@@ -15,7 +15,7 @@ def crosscorrelation(timeseries, lineagelist, regionlist, enddate, output, prima
 
 def laggedcorr(timeseries, lineagelist, regionlist, enddate, output, primaryregion):
 
-    path = os.path.join(output, str(getenddate(enddate)))
+    path = os.path.join(output, str(getenddate(enddate)), 'cross-correlation')
 
     # raise error if more than two regions
     if len(regionlist) > 2:
