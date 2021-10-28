@@ -163,7 +163,7 @@ def plottopseries(dataframe, lineagelist, regionlist, output, enddate, adm, line
     rownum = int(num)
     lineageregioncount[lineage] = pd.Categorical(lineageregioncount[lineage], categories=lineagelist)
     lineageregioncount.dropna(inplace=True)
-    toplineagelist = lineageregioncount[lineage].iloc[0:rownum]
+    toplineagelist = lineageregioncount[lineage].iloc[0:rownum].tolist()
 
     for region in ascendregionlist:
 
@@ -171,12 +171,12 @@ def plottopseries(dataframe, lineagelist, regionlist, output, enddate, adm, line
         regionframe = regionframe.reset_index()
 
         regionframe[lineage] = pd.Categorical(regionframe[lineage], categories=toplineagelist)
+        regionframe.dropna(inplace=True)
 
         regionframe['combine'] = regionframe['sample_date'].astype(str) + "_" + regionframe[lineage].astype(str)
         regionframe['frequency'] = regionframe['combine'].map(regionframe['combine'].value_counts())
 
         regionframe.drop_duplicates(subset=['combine'], inplace=True)
-        regionframe.dropna(inplace=True)
 
         cc = regionframe['frequency'].to_numpy()
         sc = lambda x : scalepoint*x
