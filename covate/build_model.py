@@ -290,6 +290,15 @@ def vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist, nstep
         plt.clf()
         plt.close()
 
+    # create prediction dataframe and save to csv
+    for region in regionlist:
+        oldname = str(lineage) + '_' + str(region)
+        predname = str(lineage) + '_' + str(region) + '_prediction'
+        pred.rename(columns={oldname : predname}, inplace=True)
+        pred[predname] = pred[predname].astype(int)
+
+    pred.to_csv(filename + '_prediction.csv')
+
 
 def vecerrcorrvalid(X_train, X_test, lineage, VECMdeterm, lag, coint_count, regionlist, nsteps, alpha, filename, output, errorlog, enddate):
     """Build VECM model for validation"""
@@ -341,6 +350,7 @@ def vecerrcorrvalid(X_train, X_test, lineage, VECMdeterm, lag, coint_count, regi
         actname = str(lineage) + '_' + str(region) + '_actual'
         pred.rename(columns={oldname : predname}, inplace=True)
         X_test.rename(columns={oldname : actname}, inplace=True)
+        pred[predname] = pred[predname].astype(int)
 
     predact = pred.join(X_test)
     predact.to_csv(filename + '_validation.csv')
@@ -441,6 +451,16 @@ def vecautoreg(X_train, lineage, maxlag, regionlist, nsteps, alpha, filename, ou
         plt.savefig(path + '/' + lineage + '_' + region + '_VAR.png')
         plt.clf()
         plt.close()
+
+    # create prediction dataframe and save to csv
+    for region in regionlist:
+        oldname = str(lineage) + '_' + str(region)
+        predname = str(lineage) + '_' + str(region) + '_prediction'
+        fc.rename(columns={oldname : predname}, inplace=True)
+        fc.drop(columns=[oldname + '_diff'], inplace=True)
+        fc[predname] = fc[predname].astype(int)
+
+    fc.to_csv(filename + '_prediction.csv')
 
 
 def vecautoregvalid(X_train, X_test, lineage, maxlag, regionlist, nsteps, alpha, filename, output, errorlog, enddate):
@@ -543,6 +563,7 @@ def vecautoregvalid(X_train, X_test, lineage, maxlag, regionlist, nsteps, alpha,
         fc.rename(columns={oldname : predname}, inplace=True)
         X_test.rename(columns={oldname : actname}, inplace=True)
         fc.drop(columns=[oldname + '_diff'], inplace=True)
+        fc[predname] = fc[predname].astype(int)
 
     predact = fc.join(X_test)
     predact.to_csv(filename + '_validation.csv')
