@@ -2,8 +2,9 @@ from itertools import tee
 import os
 from datetime import datetime
 
+
 def pairwiseunique(iterable):
-    """return all unique pairwise combinations in a list, e.g. l=[i, j] -> (i, j)"""
+    """return all unique pairwise combinations in list, l=[i, j] -> (i, j)"""
 
     i, j = tee(iterable)
     next(j, None)
@@ -12,12 +13,12 @@ def pairwiseunique(iterable):
 
 
 def pairwise(iterable):
-    """return all pairwise combinations in a list, e.g. l=[i, j] -> (i, j), (j, i)"""
+    """return all pairwise combinations in list, l=[i, j] -> (i, j), (j, i)"""
 
     pairs = []
-    for i in range(0,len(iterable)):
-        for j in range(0,len(iterable)):
-            if (i!=j):
+    for i in range(0, len(iterable)):
+        for j in range(0, len(iterable)):
+            if (i != j):
                 pairs.append((iterable[i], iterable[j]))
 
     return pairs
@@ -58,7 +59,9 @@ def createoutputdir(lineage, output, enddate):
 
     out_time = getenddate(enddate)
 
-    out_list = ['prediction', 'validation', 'logs/prediction', 'logs/validation', 'additional-plots/prediction/VAR', 'additional-plots/validation/VAR']
+    out_list = ['prediction', 'validation', 'logs/prediction',
+                'logs/validation', 'additional-plots/prediction/VAR',
+                'additional-plots/validation/VAR']
 
     for elem in out_list:
         out_dir = os.path.join(out_time, lineage, elem)
@@ -68,5 +71,4 @@ def createoutputdir(lineage, output, enddate):
 
     cross_dir = os.path.join(output, out_time, 'cross-correlation')
     if not os.path.isdir(cross_dir):
-            os.makedirs(cross_dir)
-
+        os.makedirs(cross_dir)
