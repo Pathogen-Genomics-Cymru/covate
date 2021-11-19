@@ -1,3 +1,4 @@
+![Build Status](https://github.com/Pathogen-Genomics-Cymru/covate/workflows/Covate-CI/badge.svg)
 # covate #
 Covate uses the COG-UK metadata to forecast time series for lineages of SARS-CoV-2 that are common to a specified list of regions. The selection of either a VAR or VECM model is automated on a per lineage basis, based on the results of a cointegration test. The selection of parameters for the chosen model is also automated.
 
