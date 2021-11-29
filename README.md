@@ -5,9 +5,11 @@ Covate uses the COG-UK metadata to forecast time series for lineages of SARS-CoV
 In addition, covate can also build validation forecasts for existing metadata, and run a cross-correlation analysis that investigates the likelihood of lineages of SARS-CoV-2 being imported between two regions.
 
 ## Install ##
+The recommended Python versions for running covate are 3.7.x - 3.9.x (other versions may work but are untested). To install using pip with git+:
 ```
  pip install git+https://github.com/Pathogen-Genomics-Cymru/covate.git
 ```
+Alternatively, clone the repository and run `python setup.py install`
 
 ## Usage ##
 
@@ -73,11 +75,11 @@ optional arguments:
 <img height="600" src="https://github.com/Pathogen-Genomics-Cymru/covate/blob/main/covate-workflow.png" />
 
 ## Output ##
-A date-stamped output directory is created with sub-directories for each common lineage and a cross-correlation sub-directory. At the top level you will find a csv of the timeseries and error log file(s). In a lineage sub-directory you should find the following directories and plots:
-* **prediction** The forecasted time series for each region.
-* **validation** A validation forecast for each region (plots the time series for the last nsteps prior to the set end date with a forecast). This directory will be empty if --validate is not specified.
-* **logs** Log files containing information on the time series and the built models. If there are any errors raised for the lineage then an error log will also be generated. There are separate log files for prediction and validation.
+A date-stamped output directory is created with sub-directories for each common lineage and a cross-correlation sub-directory. The cross-correlation directory contains two plots and a csv for the primary region (if --cross-correlation). At the top level you will find a csv of the timeseries and summary error log file(s) for prediction and validation (if --validate). In a lineage sub-directory you should find the following directories and plots:
+* **prediction** The forecasted time series for each region. If the directory is empty then the forecast has failed to run (check logs/prediction for the error log).
+* **validation** A validation forecast for each region (plots the time series for the last nsteps prior to the set end date with a forecast). This directory will be empty if --validate is not specified. If --validate has been specified and the directory is empty then the forecast has failed to run (check logs/validation for the error log).
+* **logs** There are separate log files for prediction and validation. Log files $lineage_model.txt contain information on the built models. If there are any errors raised for the lineage then an error log $lineage_error.txt will also be generated. There are also csvs of the forecasted time series values.
 * **additional-plots** Time series for the lineage and ACF plots for each region. There may be additional VAR plots if relevant.
 
 ### Error Log ###
-There are separate error log files for prediction and validation. The error log will likely contain ERROR and WARN messages for some lineages. ERROR messages indicate a fatal error where the code was unable to build a model for a lineage due to poor quality data. WARN messages indicate a non-fatal error, in this case the model should build for a lineage, but the message may indicate that the model might not be accurate (e.g. A WARN message is recorded if causality is not found). 
+There are separate error log files for prediction and validation. The error logs will likely contain ERROR and WARN messages for some lineages. ERROR messages indicate a fatal error where the code was unable to build a model for a lineage due to poor quality data. WARN messages indicate a non-fatal error, in this case the model should build for a lineage, but the message may indicate that the model might not be accurate (e.g. A WARN message is recorded if causality is not found). 
