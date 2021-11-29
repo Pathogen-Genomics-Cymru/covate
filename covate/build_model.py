@@ -303,7 +303,7 @@ def cointegration(X_train, lineage, regionlist, lag, determ, filename):
             elif determ == 1:
                 runVECM = 'lo'
             elif determ == -1:
-                runVECM = 'nc'
+                runVECM = 'n'
 
     appendline(filename + '_model.txt', 'Cointegration rank for ' + str(determ)
                + ' at lag ' + str(lag) + ' = ' + str(count_coint))
