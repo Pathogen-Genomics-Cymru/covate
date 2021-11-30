@@ -32,7 +32,7 @@ def main():
                         help="Select either lineage or uk_lineage")
 
     parser.add_argument("-t", "--time-period", dest="timeperiod",
-                        required=False, default="12",
+                        required=False, default="12", type=int,
                         help="""Select time period in weeks to take
                         from metadata""")
 
@@ -55,14 +55,26 @@ def main():
                         cross-correlation""")
 
     parser.add_argument("-m", "--max-lags", dest="maxlags", required=False,
-                        default="14",
+                        default="14", type=int,
                         help="Maximum number of lags to investigate")
 
     parser.add_argument("-n", "--n-steps", dest="nsteps", required=False,
-                        default="14",
+                        default="14", type=int,
                         help="Number of days to predict")
 
     args = parser.parse_args()
+
+    # check args
+    # raise error if more than two regions for cross-correlation
+    if args.crosscorr:
+
+        regionlist = [str(region) for region in args.regions.split(', ')]
+
+        if len(regionlist) > 2:
+
+            raise ValueError('''The cross-correlation analysis is currently only
+                             supported for two regions.''')
+
 
     # build the time series
     countbydate, lineagecommon, region_list, enddate, toplineagelist = (

@@ -18,11 +18,6 @@ def laggedcorr(timeseries, lineagelist, regionlist, enddate, output,
 
     path = os.path.join(output, str(getenddate(enddate)), 'cross-correlation')
 
-    # raise error if more than two regions
-    if len(regionlist) > 2:
-        raise ValueError('''The cross-correlation analysis is currently only
-                         supported for two regions.''')
-
     # get secondary region
     seclist = [s for s in regionlist if not str(primaryregion) in s]
     secondregion = str(seclist[0])

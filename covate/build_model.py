@@ -11,12 +11,10 @@ from .utils import appendline, pairwise, getenddate
 import warnings
 
 
-def buildmodel(timeseries, lineagelist, regionlist, enddate, output, maxlags,
+def buildmodel(timeseries, lineagelist, regionlist, enddate, output, maxlag,
                nsteps, validate):
     """ Run stats tests for each lineage and select model and parameters"""
 
-    maxlag = int(maxlags)
-    nsteps = int(nsteps)
     alpha = 0.05
 
     for lineage in lineagelist:
