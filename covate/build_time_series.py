@@ -74,6 +74,9 @@ def buildseries(metadata, regions, adm, lineagetype, timeperiod, enddate,
 
             lineagecommon.append(lineage)
 
+    # fill in missing dates
+    countbydate = countbydate.asfreq('D', fill_value=0)
+
     # create output directory
     for lineage in lineagecommon:
 
