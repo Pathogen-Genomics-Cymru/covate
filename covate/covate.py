@@ -75,7 +75,6 @@ def main():
             raise ValueError('''The cross-correlation analysis is currently only
                              supported for two regions.''')
 
-
     # build the time series
     countbydate, lineagecommon, region_list, enddate, toplineagelist = (
         buildseries(args.metadata, args.regions, args.adm, args.lineagetype,
