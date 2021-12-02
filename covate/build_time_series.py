@@ -41,18 +41,25 @@ def buildseries(metadata, regions, adm, lineagetype, timeperiod, enddate,
     groupdf = (df.groupby('lineage_adm').resample('D')['cog_id'].count()
                  .reset_index(name="count"))
 
-    countbydate = groupdf.pivot_table('count', ['sample_date'], 'lineage_adm')
-    countbydate.replace([np.nan], '0', inplace=True)
+    countbydateall = groupdf.pivot_table('count', ['sample_date'],
+                                         'lineage_adm')
+
+    countbydateall.replace([np.nan], '0', inplace=True)
 
     # get column names for lineages and convert to numeric
-    lineage_adm_cols = [item for item in countbydate.columns
+    lineage_adm_cols = [item for item in countbydateall.columns
                         if item not in ["sample_date"]]
 
     for col in lineage_adm_cols:
 
-        countbydate[col] = pd.to_numeric(countbydate[col], downcast="integer")
+        countbydateall[col] = pd.to_numeric(countbydateall[col],
+                                            downcast="integer")
 
-    # only keep lineages found in all the  regions
+
+    # fill in missing dates
+    countbydateall = countbydateall.asfreq('D', fill_value=0)
+
+    # only keep lineages found in all the regions
     lineagecommon = []
     numcountry = len(region_list)
 
@@ -60,22 +67,19 @@ def buildseries(metadata, regions, adm, lineagetype, timeperiod, enddate,
 
         lineagestr = str(lineage) + '_'
 
-        listbylineage = (countbydate.columns.str.startswith(lineagestr)
+        listbylineage = (countbydateall.columns.str.startswith(lineagestr)
                          .tolist())
 
         truecount = sum(listbylineage)
 
         if truecount < numcountry:
 
-            countbydate = countbydate.loc[:,
-                                          ~countbydate.columns
-                                          .str.startswith(lineagestr)]
+            countbydate = countbydateall.loc[:,
+                                             ~countbydateall.columns
+                                             .str.startswith(lineagestr)]
         else:
 
             lineagecommon.append(lineage)
-
-    # fill in missing dates
-    countbydate = countbydate.asfreq('D', fill_value=0)
 
     # create output directory
     for lineage in lineagecommon:
@@ -83,9 +87,11 @@ def buildseries(metadata, regions, adm, lineagetype, timeperiod, enddate,
         createoutputdir(lineage, output, enddate)
 
     if not validate:
-        # save raw time series
+        # save time series
         path = os.path.join(output, str(getenddate(enddate)))
-        countbydate.to_csv(path + '/timeseriesraw.csv', sep=',')
+
+        countbydateall.to_csv(path + '/timeseriesall.csv', sep=',')
+        countbydate.to_csv(path + '/timeseriescommon.csv', sep=',')
 
         # plot time series and lag plot
         plotseries(countbydate, lineagecommon, region_list, output, enddate)
@@ -193,7 +199,35 @@ def plottopseries(dataframe, lineagelist, regionlist, output, enddate, adm,
     lineageregioncount.to_csv(path + '/' + primaryregion + '_lineagefreq.csv',
                               sep=',', index=False)
 
-    # get top $num lineages that are common to all regions
+    # get secondary region and its lineage counts
+    seclist = [s for s in regionlist if not str(primaryregion) in s]
+    secondregion = str(seclist[0])
+
+    secondregionframe = dataframe[dataframe[adm].str.match(secondregion)]
+    secondregionframe = secondregionframe.reset_index()
+
+    lineageregioncount2 = (secondregionframe.groupby([lineage]).size()
+                           .reset_index(name='counts'))
+    lineageregioncount2.sort_values('counts', ascending=False, inplace=True)
+    lineageregioncount2.to_csv(path + '/' + secondregion + '_lineagefreq.csv',
+                               sep=',', index=False)
+
+    # get combined lineage region count dataframe
+    lineageregioncomb = lineageregioncount.merge(lineageregioncount2,
+                                                on=lineage,
+                                                how='outer')
+
+    lineageregioncomb.rename(columns={"counts_x": primaryregion, 
+                             "counts_y": secondregion}, inplace=True)
+
+    lineageregioncomb = lineageregioncomb.fillna(0)
+    lineageregioncomb[primaryregion] = lineageregioncomb[primaryregion].astype(int)
+    lineageregioncomb[secondregion] = lineageregioncomb[secondregion].astype(int)
+
+    lineageregioncomb.to_csv(path + '/' + 'lineagefreqbyregion.csv',
+                              sep=',', index=False)
+
+    # get top $num lineages from primary region that are common to all regions
     rownum = int(num)
     lineageregioncount[lineage] = pd.Categorical(lineageregioncount[lineage],
                                                  categories=lineagelist)
