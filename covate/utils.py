@@ -1,4 +1,4 @@
-from itertools import tee
+from itertools import combinations
 import os
 from datetime import datetime
 
@@ -6,10 +6,9 @@ from datetime import datetime
 def pairwiseunique(iterable):
     """return all unique pairwise combinations in list, l=[i, j] -> (i, j)"""
 
-    i, j = tee(iterable)
-    next(j, None)
+    pairs = combinations(iterable, 2)
 
-    return zip(i, j)
+    return list(pairs)
 
 
 def pairwise(iterable):
