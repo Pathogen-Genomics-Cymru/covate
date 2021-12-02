@@ -41,6 +41,10 @@ def main():
                         help="""Select end date to take from metadata.
                         Format: d/m/Y""")
 
+    parser.add_argument("-p", "--predict", dest="predict", required=False,
+                        action="store_true",
+                        help="Run prediction forecast")
+
     parser.add_argument("-v", "--validate", dest="validate", required=False,
                         action="store_true",
                         help="Run validation forecast")
@@ -49,7 +53,7 @@ def main():
                         required=False, action="store_true",
                         help="Run cross-correlation analysis")
 
-    parser.add_argument("-p", "--primary-region", dest="primaryregion",
+    parser.add_argument("-f", "--primary-region", dest="primaryregion",
                         required=False, default="Wales",
                         help="""Region of primary interest for
                         cross-correlation""")
@@ -88,8 +92,10 @@ def main():
                          args.output, args.primaryregion, toplineagelist)
 
     # build the model
-    buildmodel(countbydate, lineagecommon, region_list, enddate, args.output,
-               args.maxlags, args.nsteps, False)
+    if args.predict:
+
+        buildmodel(countbydate, lineagecommon, region_list, enddate, args.output,
+                   args.maxlags, args.nsteps, False)
 
     # if validation forecast selected, run again
     if args.validate:
