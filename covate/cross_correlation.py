@@ -43,8 +43,16 @@ def laggedcorr(timeseries, lineagelist, regionlist, enddate, output,
     max_corr_time = appended_data.idxmax(axis=1)
     max_corr_value = appended_data.max(axis=1)
 
-    max_combine = pd.concat([max_corr_time, max_corr_value], axis=1)
-    max_combine_05 = max_combine[max_combine.loc[:, 1] >= 0.5]
+    max_combine = pd.DataFrame({'max_corr': max_corr_value, 'lag': max_corr_time})
+    max_combine.index.name = 'lineage'
+
+    max_combine_05 = max_combine[max_combine.iloc[:, 0] >= 0.5]
+
+    max_combine.to_csv(path + '/' + 'maxcorrlag.csv',
+                       sep=',', index=True)
+
+    max_combine_05.to_csv(path + '/' + 'maxcorrlag05.csv',
+                          sep=',', index=True)
 
     bins_list = [-30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30]
 
