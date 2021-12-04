@@ -91,6 +91,12 @@ def laggedcorr(timeseries, lineagelist, regionlist, enddate, output,
                       prop=dict(size=14), loc='upper left')
     ax3.add_artist(at)
 
+    fig.suptitle('(a) Box plots of the Kendall cross-correlation coeff at '
+                 + 'different time lags of the ' + primaryregion +
+                 ' distribution. \n Histograms showing the time lag for the max '
+                 + 'cross-correlation coeff for (b) all lineages and (c) '
+                 + 'lineages with max coeff >=0.5')
+
     plt.rcParams['font.size'] = '10'
     plt.savefig(path + '/' + "crosscorrelation.png", format="png")
     plt.clf()

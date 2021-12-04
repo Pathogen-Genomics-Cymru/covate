@@ -271,6 +271,10 @@ def plottopseries(dataframe, lineagelist, regionlist, output, enddate, adm,
 
     leg = plt.legend(bbox_to_anchor=(0.8, -0.07), frameon=False)
     ax.add_artist(leg)
+    ax.title.set_text('Number of cases in ' + primaryregion + ' and '
+                      + secondregion + ' for the ' + str(num) + ' most observed'
+                      + ' lineages in ' + primaryregion)
+
     msizes = [1, 10, 50, 100, 500, 1000, 2000]
     markers = []
     for size in msizes:
