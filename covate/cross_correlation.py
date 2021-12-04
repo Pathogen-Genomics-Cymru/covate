@@ -43,7 +43,9 @@ def laggedcorr(timeseries, lineagelist, regionlist, enddate, output,
     max_corr_time = appended_data.idxmax(axis=1)
     max_corr_value = appended_data.max(axis=1)
 
-    max_combine = pd.DataFrame({'max_corr': max_corr_value, 'lag': max_corr_time})
+    max_combine = pd.DataFrame({'max_corr': max_corr_value,
+                                'lag': max_corr_time})
+
     max_combine.index.name = 'lineage'
 
     max_combine_05 = max_combine[max_combine.iloc[:, 0] >= 0.5]
@@ -91,11 +93,11 @@ def laggedcorr(timeseries, lineagelist, regionlist, enddate, output,
                       prop=dict(size=14), loc='upper left')
     ax3.add_artist(at)
 
-    fig.suptitle('(a) Box plots of the Kendall cross-correlation coeff at '
-                 + 'different time lags of the ' + primaryregion +
-                 ' distribution. \n Histograms showing the time lag for the max '
-                 + 'cross-correlation coeff for (b) all lineages and (c) '
-                 + 'lineages with max coeff >=0.5')
+    fig.suptitle('(a) Box plots of the Kendall cross-correlation coeff '
+                 + 'at different time lags of the ' + primaryregion +
+                 ' distribution. \n Histograms showing the time lag for '
+                 + 'the max cross-correlation coeff for (b) all lineages '
+                 + 'and (c) lineages with max coeff >=0.5')
 
     plt.rcParams['font.size'] = '10'
     plt.savefig(path + '/' + "crosscorrelation.png", format="png")

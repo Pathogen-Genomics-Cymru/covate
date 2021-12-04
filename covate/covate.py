@@ -94,8 +94,8 @@ def main():
     # build the model
     if args.predict:
 
-        buildmodel(countbydate, lineagecommon, region_list, enddate, args.output,
-                   args.maxlags, args.nsteps, False)
+        buildmodel(countbydate, lineagecommon, region_list, enddate,
+                   args.output, args.maxlags, args.nsteps, False)
 
     # if validation forecast selected, run again
     if args.validate:

@@ -55,7 +55,6 @@ def buildseries(metadata, regions, adm, lineagetype, timeperiod, enddate,
         countbydateall[col] = pd.to_numeric(countbydateall[col],
                                             downcast="integer")
 
-
     # fill in missing dates
     countbydateall = countbydateall.asfreq('D', fill_value=0)
 
@@ -71,6 +70,8 @@ def buildseries(metadata, regions, adm, lineagetype, timeperiod, enddate,
                          .tolist())
 
         truecount = sum(listbylineage)
+
+        countbydate = countbydateall.copy()
 
         if truecount < numcountry:
 
@@ -214,18 +215,20 @@ def plottopseries(dataframe, lineagelist, regionlist, output, enddate, adm,
 
     # get combined lineage region count dataframe
     lineageregioncomb = lineageregioncount.merge(lineageregioncount2,
-                                                on=lineage,
-                                                how='outer')
+                                                 on=lineage,
+                                                 how='outer')
 
-    lineageregioncomb.rename(columns={"counts_x": primaryregion, 
+    lineageregioncomb.rename(columns={"counts_x": primaryregion,
                              "counts_y": secondregion}, inplace=True)
 
     lineageregioncomb = lineageregioncomb.fillna(0)
-    lineageregioncomb[primaryregion] = lineageregioncomb[primaryregion].astype(int)
-    lineageregioncomb[secondregion] = lineageregioncomb[secondregion].astype(int)
+    lineageregioncomb[primaryregion] = (lineageregioncomb[primaryregion]
+                                        .astype(int))
+    lineageregioncomb[secondregion] = (lineageregioncomb[secondregion]
+                                       .astype(int))
 
     lineageregioncomb.to_csv(path + '/' + 'lineagefreqbyregion.csv',
-                              sep=',', index=False)
+                             sep=',', index=False)
 
     # get top $num lineages from primary region that are common to all regions
     rownum = int(num)
@@ -272,8 +275,8 @@ def plottopseries(dataframe, lineagelist, regionlist, output, enddate, adm,
     leg = plt.legend(bbox_to_anchor=(0.8, -0.07), frameon=False)
     ax.add_artist(leg)
     ax.title.set_text('Number of cases in ' + primaryregion + ' and '
-                      + secondregion + ' for the ' + str(num) + ' most observed'
-                      + ' lineages in ' + primaryregion)
+                      + secondregion + ' for the ' + str(num)
+                      + ' most observed lineages in ' + primaryregion)
 
     msizes = [1, 10, 50, 100, 500, 1000, 2000]
     markers = []
