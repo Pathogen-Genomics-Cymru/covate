@@ -416,6 +416,7 @@ def vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist,
         pred.rename(columns={oldname: predname}, inplace=True)
         pred[predname] = pred[predname].astype(int)
 
+    pred.index.name = 'sample_date'
     pred.to_csv(filename + '_prediction.csv')
 
 
@@ -613,6 +614,7 @@ def vecautoreg(X_train, lineage, maxlag, regionlist, nsteps, alpha,
         fc.drop(columns=[oldname + '_diff'], inplace=True)
         fc[predname] = fc[predname].astype(int)
 
+    fc.index.name = 'sample_date'
     fc.to_csv(filename + '_prediction.csv')
 
 
