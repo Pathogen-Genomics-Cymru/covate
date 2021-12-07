@@ -13,11 +13,14 @@ Covate can also build validation forecasts for existing metadata. For example, t
 Covate can run a cross-correlation analysis that investigates the likelihood of lineages of SARS-CoV-2 being imported between the regions.
 
 ## Install ##
-The recommended Python versions for running covate are 3.7.x - 3.9.x (other versions may work but are untested). To install using pip with git+:
+The recommended Python versions for running covate are 3.7.x - 3.9.x (other versions may work but are untested). 
+
+For stability, it is recommended you download the latest [release](https://github.com/Pathogen-Genomics-Cymru/covate/releases) and install using `python setup.py install`
+
+To install the very latest updates (as on main branch) you can use pip with git+:
 ```
  pip install git+https://github.com/Pathogen-Genomics-Cymru/covate.git
 ```
-Alternatively, clone the repository and run `python setup.py install`
 
 ## Usage ##
 
