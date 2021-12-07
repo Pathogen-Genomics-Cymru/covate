@@ -68,19 +68,9 @@ def main():
 
     args = parser.parse_args()
 
-    # check args
-    # raise error if more than two regions for cross-correlation
-    if args.crosscorr:
-
-        regionlist = [str(region) for region in args.regions.split(', ')]
-
-        if len(regionlist) > 2:
-
-            raise ValueError('''The cross-correlation analysis is currently only
-                             supported for two regions.''')
-
     # build the time series
-    countbydate, lineagecommon, region_list, enddate, toplineagelist = (
+    (countbydate, lineagecommon, region_list, enddate, toplineagelist,
+     ascendregionlist) = (
         buildseries(args.metadata, args.regions, args.adm, args.lineagetype,
                     args.timeperiod, args.enddate, args.output, args.nsteps,
                     False, args.crosscorr, args.primaryregion))
@@ -88,8 +78,8 @@ def main():
     # run cross-correlation analysis
     if args.crosscorr:
 
-        crosscorrelation(countbydate, lineagecommon, region_list, enddate,
-                         args.output, args.primaryregion, toplineagelist)
+        crosscorrelation(countbydate, lineagecommon, ascendregionlist, enddate,
+                         args.output, toplineagelist)
 
     # build the model
     if args.predict:
@@ -100,7 +90,8 @@ def main():
     # if validation forecast selected, run again
     if args.validate:
 
-        countbydate, lineagecommon, region_list, enddate, toplineagelist = (
+        (countbydate, lineagecommon, region_list, enddate, toplineagelist,
+         ascendregionlist) = (
             buildseries(args.metadata, args.regions, args.adm,
                         args.lineagetype, args.timeperiod, args.enddate,
                         args.output, args.nsteps, args.validate,

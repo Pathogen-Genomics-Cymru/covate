@@ -3,24 +3,25 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from matplotlib.offsetbox import AnchoredText
 import os
-from .utils import getenddate
+from .utils import getenddate, pairwiseunique
 
 
-def crosscorrelation(timeseries, lineagelist, regionlist, enddate, output,
-                     primaryregion, toplineagelist):
+def crosscorrelation(timeseries, lineagelist, ascendregionlist, enddate,
+                     output, toplineagelist):
 
-    laggedcorr(timeseries, lineagelist, regionlist, enddate, output,
-               primaryregion, toplineagelist)
+    # get descended region list
+    descendregionlist = list(reversed(ascendregionlist))
+
+    for primaryregion, secondregion in pairwiseunique(descendregionlist):
+
+        laggedcorr(timeseries, lineagelist, primaryregion, secondregion,
+                   enddate, output, toplineagelist)
 
 
-def laggedcorr(timeseries, lineagelist, regionlist, enddate, output,
-               primaryregion, toplineagelist):
+def laggedcorr(timeseries, lineagelist, primaryregion, secondregion, enddate,
+               output, toplineagelist):
 
     path = os.path.join(output, str(getenddate(enddate)), 'cross-correlation')
-
-    # get secondary region
-    seclist = [s for s in regionlist if not str(primaryregion) in s]
-    secondregion = str(seclist[0])
 
     appended_data = []
     for lineage in toplineagelist:
@@ -50,10 +51,12 @@ def laggedcorr(timeseries, lineagelist, regionlist, enddate, output,
 
     max_combine_05 = max_combine[max_combine.iloc[:, 0] >= 0.5]
 
-    max_combine.to_csv(path + '/' + 'maxcorrlag.csv',
+    max_combine.to_csv(path + '/' + primaryregion + '_' + secondregion
+                       + '_maxcorrlag.csv',
                        sep=',', index=True)
 
-    max_combine_05.to_csv(path + '/' + 'maxcorrlag05.csv',
+    max_combine_05.to_csv(path + '/' + primaryregion + '_' + secondregion
+                          + '_maxcorrlag05.csv',
                           sep=',', index=True)
 
     bins_list = [-30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30]
@@ -94,12 +97,14 @@ def laggedcorr(timeseries, lineagelist, regionlist, enddate, output,
     ax3.add_artist(at)
 
     fig.suptitle('(a) Box plots of the Kendall cross-correlation coeff '
-                 + 'at different time lags of the ' + primaryregion +
+                 + 'at different time lags of the ' + primaryregion
+                 + ' distribution against the ' + secondregion +
                  ' distribution. \n Histograms showing the time lag for '
                  + 'the max cross-correlation coeff for (b) all lineages '
                  + 'and (c) lineages with max coeff >=0.5')
 
     plt.rcParams['font.size'] = '10'
-    plt.savefig(path + '/' + "crosscorrelation.png", format="png")
+    plt.savefig(path + '/' + primaryregion + "_" + secondregion
+                + "_crosscorrelation.png", format="png")
     plt.clf()
     plt.close(fig)

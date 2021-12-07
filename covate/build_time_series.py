@@ -99,14 +99,18 @@ def buildseries(metadata, regions, adm, lineagetype, timeperiod, enddate,
 
     # if cross-correlation True
     toplineagelist = []
+    ascendregionlist = []
 
     if crosscorr:
 
-        toplineagelist = plottopseries(df, lineagecommon, region_list, output,
-                                       enddate, adm, lineagetype,
-                                       primaryregion, 40)
+        toplineagelist, ascendregionlist = plottopseries(df, lineagecommon,
+                                                         region_list, output,
+                                                         enddate, adm,
+                                                         lineagetype,
+                                                         primaryregion, 40)
 
-    return countbydate, lineagecommon, region_list, enddate, toplineagelist
+    return (countbydate, lineagecommon, region_list, enddate, toplineagelist,
+            ascendregionlist)
 
 
 def gettimeperiod(dataframe, timeperiod, enddate, nsteps, validate):
@@ -195,40 +199,13 @@ def plottopseries(dataframe, lineagelist, regionlist, output, enddate, adm,
 
     # get lineage counts for primary region
     lineageregioncount = (primaryregionframe.groupby([lineage]).size()
-                          .reset_index(name='counts'))
-    lineageregioncount.sort_values('counts', ascending=False, inplace=True)
+                          .reset_index(name=primaryregion))
+    lineageregioncount.sort_values(primaryregion, ascending=False,
+                                   inplace=True)
+    lineageregioncount[primaryregion] = (lineageregioncount[primaryregion]
+                                         .astype(int))
     lineageregioncount.to_csv(path + '/' + primaryregion + '_lineagefreq.csv',
                               sep=',', index=False)
-
-    # get secondary region and its lineage counts
-    seclist = [s for s in regionlist if not str(primaryregion) in s]
-    secondregion = str(seclist[0])
-
-    secondregionframe = dataframe[dataframe[adm].str.match(secondregion)]
-    secondregionframe = secondregionframe.reset_index()
-
-    lineageregioncount2 = (secondregionframe.groupby([lineage]).size()
-                           .reset_index(name='counts'))
-    lineageregioncount2.sort_values('counts', ascending=False, inplace=True)
-    lineageregioncount2.to_csv(path + '/' + secondregion + '_lineagefreq.csv',
-                               sep=',', index=False)
-
-    # get combined lineage region count dataframe
-    lineageregioncomb = lineageregioncount.merge(lineageregioncount2,
-                                                 on=lineage,
-                                                 how='outer')
-
-    lineageregioncomb.rename(columns={"counts_x": primaryregion,
-                             "counts_y": secondregion}, inplace=True)
-
-    lineageregioncomb = lineageregioncomb.fillna(0)
-    lineageregioncomb[primaryregion] = (lineageregioncomb[primaryregion]
-                                        .astype(int))
-    lineageregioncomb[secondregion] = (lineageregioncomb[secondregion]
-                                       .astype(int))
-
-    lineageregioncomb.to_csv(path + '/' + 'lineagefreqbyregion.csv',
-                             sep=',', index=False)
 
     # get top $num lineages from primary region that are common to all regions
     rownum = int(num)
@@ -236,6 +213,36 @@ def plottopseries(dataframe, lineagelist, regionlist, output, enddate, adm,
                                                  categories=lineagelist)
     lineageregioncount.dropna(inplace=True)
     toplineagelist = lineageregioncount[lineage].iloc[0:rownum].tolist()
+
+    # get secondary regions and their lineage counts
+    seclist = [s for s in regionlist if not str(primaryregion) in s]
+
+    for region in seclist:
+
+        secondregionframe = dataframe[dataframe[adm].str.match(region)]
+        secondregionframe = secondregionframe.reset_index()
+
+        lineageregioncount2 = (secondregionframe.groupby([lineage]).size()
+                               .reset_index(name=region))
+        lineageregioncount2.sort_values(region, ascending=False, inplace=True)
+
+        lineageregioncount2.to_csv(path + '/' + region + '_lineagefreq.csv',
+                                   sep=',', index=False)
+
+        # get combined lineage region count dataframe
+        lineageregioncount = lineageregioncount.merge(lineageregioncount2,
+                                                      on=lineage,
+                                                      how='outer')
+
+    lineageregioncount = lineageregioncount.fillna(0)
+
+    for region in ascendregionlist:
+
+        lineageregioncount[region] = (lineageregioncount[region]
+                                      .astype(int))
+
+    lineageregioncount.to_csv(path + '/' + 'lineagefreqbyregion.csv',
+                              sep=',', index=False)
 
     for region in ascendregionlist:
 
@@ -274,8 +281,8 @@ def plottopseries(dataframe, lineagelist, regionlist, output, enddate, adm,
 
     leg = plt.legend(bbox_to_anchor=(0.8, -0.07), frameon=False)
     ax.add_artist(leg)
-    ax.title.set_text('Number of cases in ' + primaryregion + ' and '
-                      + secondregion + ' for the ' + str(num)
+    ax.title.set_text('Number of cases in ' + str(ascendregionlist)
+                      + ' for the ' + str(num)
                       + ' most observed lineages in ' + primaryregion)
 
     msizes = [1, 10, 50, 100, 500, 1000, 2000]
@@ -292,7 +299,7 @@ def plottopseries(dataframe, lineagelist, regionlist, output, enddate, adm,
     plt.clf()
     plt.close(fig)
 
-    return toplineagelist
+    return toplineagelist, ascendregionlist
 
 
 def padseries(dataframe):
