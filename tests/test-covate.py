@@ -56,7 +56,7 @@ def checktimeseries():
 def checkcrosscorr():
     """compare the cross-correlation csvs for 30/8/2021 against truth set"""
 
-    filelist = ['lineagefreqbyregion.csv', 'maxcorrlag.csv', 'maxcorrlag05.csv', 'Wales_lineagefreq.csv']
+    filelist = ['lineagefreqbyregion.csv', 'Wales_England_maxcorrlag.csv', 'Wales_England_maxcorrlag05.csv', 'Wales_lineagefreq.csv', 'England_lineagefreq.csv']
 
     for filename in filelist:
 
