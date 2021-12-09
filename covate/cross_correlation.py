@@ -77,7 +77,7 @@ def laggedcorr(timeseries, lineagelist, primaryregion, secondregion, enddate,
     ax1.add_artist(at)
 
     ax2 = fig.add_subplot(gs[1, 1:])
-    ax2.hist(max_combine_05.iloc[:, 0], bins=bins_list, color="slategrey")
+    ax2.hist(max_combine_05.iloc[:, 1], bins=bins_list, color="slategrey")
     x_ticks = [-30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25]
     ax2.set_ylabel('Lineage Count', fontsize=14)
     ax2.set_xlabel('Lag (days)', fontsize=14)
