@@ -9,6 +9,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from .utils import appendline, pairwise, getenddate
 import warnings
+warnings.simplefilter("ignore", UserWarning)
+warnings.simplefilter("ignore", RuntimeWarning)
 
 
 def buildmodel(timeseries, lineagelist, regionlist, enddate, output, maxlag,
@@ -60,22 +62,16 @@ def buildmodel(timeseries, lineagelist, regionlist, enddate, output, maxlag,
         # get basic information on timeseries
         checkdistribution(X_train, lineage, filename, errorlog)
 
-        # plot the autocorrelation, ignore warnings
-        with warnings.catch_warnings():
+        # plot the autocorrelation
+        if validate:
 
-            warnings.simplefilter("ignore", UserWarning)
+            plotautocorr(X_train, lineage, maxlag, output, enddate,
+                         'additional-plots/validation')
 
-            warnings.simplefilter("ignore", RuntimeWarning)
+        else:
 
-            if validate:
-
-                plotautocorr(X_train, lineage, maxlag, output, enddate,
-                             'additional-plots/validation')
-
-            else:
-
-                plotautocorr(X_train, lineage, maxlag, output, enddate,
-                             'additional-plots/prediction')
+            plotautocorr(X_train, lineage, maxlag, output, enddate,
+                         'additional-plots/prediction')
 
         # check for granger causality
         try:
@@ -168,15 +164,16 @@ def buildmodel(timeseries, lineagelist, regionlist, enddate, output, maxlag,
 
                 if not validate:
 
-                    vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count,
-                               regionlist, nsteps, alpha, filename, output,
-                               errorlog, enddate)
+                    vecerrcorr(X_train, lineage, VECMdeterm, lag,
+                               coint_count, regionlist, nsteps, alpha,
+                               filename, output, errorlog, enddate)
 
                 else:
 
-                    vecerrcorrvalid(X_train, X_test, lineage, VECMdeterm, lag,
-                                    coint_count, regionlist, nsteps, alpha,
-                                    filename, output, errorlog, enddate)
+                    vecerrcorrvalid(X_train, X_test, lineage, VECMdeterm,
+                                    lag, coint_count, regionlist, nsteps,
+                                    alpha, filename, output, errorlog,
+                                    enddate)
 
             # else check for stationarity and difference then run VAR
             else:
@@ -186,8 +183,9 @@ def buildmodel(timeseries, lineagelist, regionlist, enddate, output, maxlag,
 
                 if not validate:
 
-                    vecautoreg(X_train, lineage, maxlag, regionlist, nsteps,
-                               alpha, filename, output, errorlog, enddate)
+                    vecautoreg(X_train, lineage, maxlag, regionlist,
+                               nsteps, alpha, filename, output, errorlog,
+                               enddate)
 
                 else:
 
