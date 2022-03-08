@@ -10,4 +10,4 @@ RUN apt-get update \
 && pip install --no-cache-dir -r requirements.txt \
 && pip install git+https://github.com/Pathogen-Genomics-Cymru/covate.git
 
-ENTRYPOINT ["covate"]
+CMD ["covate"]
