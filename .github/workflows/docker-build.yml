@@ -3,9 +3,9 @@ on:
   push:
     branches:
       - main
-    paths:
-      - tag.json
-      - Dockerfile.covate
+    paths-ignore:
+      - '**/README.md'
+
 jobs:
   build:
     env:
