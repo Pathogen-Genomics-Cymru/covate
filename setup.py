@@ -33,6 +33,9 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=requirements,
 
+    include_package_data=True,
+    package_data={'': ['static/*']},
+
     entry_points = {
         'console_scripts': [
             'covate = covate.covate:main',

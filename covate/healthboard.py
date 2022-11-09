@@ -130,7 +130,7 @@ def plotuniquehb(wal, lineagetype, output, enddate):
 
     # plot
     # open wales map
-    im = Image.open('hb.png')
+    im = Image.open('static/hb.png')
     height = im.size[1]
 
     # need a float array between 0-1
