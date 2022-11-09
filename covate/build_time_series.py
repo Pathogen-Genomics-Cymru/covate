@@ -30,10 +30,6 @@ def buildseries(metadata, regions, adm, lineagetype, timeperiod, enddate,
     # only keep regions in regions list
     df = df[df[adm].isin(region_list)]
 
-    # save dataframe to csv
-    path = os.path.join(output, str(getenddate(enddate)))
-    df.to_csv(path + '/regions.csv', sep=',')
-
     # create array of lineages
     lineagearr = df[lineagetype].unique()
 
@@ -92,9 +88,12 @@ def buildseries(metadata, regions, adm, lineagetype, timeperiod, enddate,
         createoutputdir(lineage, output, enddate)
 
     if not validate:
-        # save time series
-        path = os.path.join(output, str(getenddate(enddate)))
 
+        # save dataframe to csv
+        path = os.path.join(output, str(getenddate(enddate)))
+        df.to_csv(path + '/regions.csv', sep=',')
+
+        # save time series
         countbydateall.to_csv(path + '/timeseriesall.csv', sep=',')
         countbydate.to_csv(path + '/timeseriescommon.csv', sep=',')
 
