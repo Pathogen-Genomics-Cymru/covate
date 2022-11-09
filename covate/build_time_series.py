@@ -30,6 +30,10 @@ def buildseries(metadata, regions, adm, lineagetype, timeperiod, enddate,
     # only keep regions in regions list
     df = df[df[adm].isin(region_list)]
 
+    # save dataframe to csv
+    path = os.path.join(output, str(getenddate(enddate)))
+    df.to_csv(path + '/regions.csv', sep=',')
+
     # create array of lineages
     lineagearr = df[lineagetype].unique()
 
@@ -157,7 +161,7 @@ def plotseries(dataframe, lineagelist, regionlist, output, enddate):
         ax2.title.set_text('Lag plot for ' + lineage + ' for '
                            + str(regionlist))
         plt.tight_layout()
-        plt.savefig(path + '/' + lineage + '_timeseries.png')
+        plt.savefig(path + '/' + lineage + '_timeseries.png', format="png", dpi=300)
         plt.clf()
         plt.close(fig)
 
@@ -296,6 +300,7 @@ def plottopseries(dataframe, lineagelist, regionlist, output, enddate, adm,
               ncol=len(msizes))
 
     plt.savefig(path + '/' + 'allLineages.png', format="png", dpi=300)
+    plt.savefig(path + '/' + 'allLineages.svg', format="svg")
     plt.clf()
     plt.close(fig)
 

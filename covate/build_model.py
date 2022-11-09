@@ -231,7 +231,7 @@ def plotautocorr(X_train, lineage, maxlag, output, enddate, folder):
         plt.title('ACF for ' + str(name))
         plt.ylabel('Autocorrelation')
         plt.xlabel('Lag (days)')
-        plt.savefig(path + '/' + name + '_ACF.png')
+        plt.savefig(path + '/' + name + '_ACF.png', format="png", dpi=300)
         plt.clf()
         plt.close()
 
@@ -401,7 +401,8 @@ def vecerrcorr(X_train, lineage, VECMdeterm, lag, coint_count, regionlist,
         plt.ylabel('Number of sequenced cases')
         plt.xlabel('Sample date')
         plt.tight_layout()
-        plt.savefig(path + '/' + lineage + '_' + region + '_VECM.png')
+        plt.savefig(path + '/' + lineage + '_' + region + '_VECM.png',
+                    format="png", dpi=300)
         plt.clf()
         plt.close()
 
@@ -471,7 +472,7 @@ def vecerrcorrvalid(X_train, X_test, lineage, VECMdeterm, lag, coint_count,
         plt.xlabel('Sample date')
         plt.tight_layout()
         plt.savefig(path + '/' + lineage + '_' + region
-                    + '_VECM_validation.png')
+                    + '_VECM_validation.png', format="png", dpi=300)
         plt.clf()
         plt.close()
 
@@ -537,7 +538,7 @@ def vecautoreg(X_train, lineage, maxlag, regionlist, nsteps, alpha,
     X_train.plot()
 
     plt.tight_layout()
-    plt.savefig(path + '/' + lineage + '_stationary_check.png')
+    plt.savefig(path + '/' + lineage + '_stationary_check.png', format="png", dpi=300)
     plt.clf()
     plt.close()
 
@@ -598,7 +599,8 @@ def vecautoreg(X_train, lineage, maxlag, regionlist, nsteps, alpha,
         plt.ylabel('Number of sequenced cases')
         plt.xlabel('Sample date')
         plt.tight_layout()
-        plt.savefig(path + '/' + lineage + '_' + region + '_VAR.png')
+        plt.savefig(path + '/' + lineage + '_' + region + '_VAR.png',
+                    format="png", dpi=300)
         plt.clf()
         plt.close()
 
@@ -662,7 +664,8 @@ def vecautoregvalid(X_train, X_test, lineage, maxlag, regionlist, nsteps,
                         'additional-plots/validation/VAR')
     X_train.plot()
     plt.tight_layout()
-    plt.savefig(path + '/' + lineage + '_stationary_check.png')
+    plt.savefig(path + '/' + lineage + '_stationary_check.png',
+                format="png", dpi=300)
     plt.clf()
     plt.close()
 
@@ -720,7 +723,7 @@ def vecautoregvalid(X_train, X_test, lineage, maxlag, regionlist, nsteps,
         plt.xlabel('Sample date')
         plt.tight_layout()
         plt.savefig(path + '/' + lineage + '_' + region
-                    + '_VAR_validation.png')
+                    + '_VAR_validation.png', format="png", dpi=300)
         plt.clf()
         plt.close()
 
