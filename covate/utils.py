@@ -71,3 +71,7 @@ def createoutputdir(lineage, output, enddate):
     cross_dir = os.path.join(output, out_time, 'cross-correlation')
     if not os.path.isdir(cross_dir):
         os.makedirs(cross_dir)
+
+    hb_dir = os.path.join(output, out_time, 'healthboard')
+    if not os.path.isdir(hb_dir):
+        os.makedirs(hb_dir)

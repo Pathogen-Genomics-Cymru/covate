@@ -88,9 +88,12 @@ def buildseries(metadata, regions, adm, lineagetype, timeperiod, enddate,
         createoutputdir(lineage, output, enddate)
 
     if not validate:
-        # save time series
-        path = os.path.join(output, str(getenddate(enddate)))
 
+        # save dataframe to csv
+        path = os.path.join(output, str(getenddate(enddate)))
+        df.to_csv(path + '/regions.csv', sep=',')
+
+        # save time series
         countbydateall.to_csv(path + '/timeseriesall.csv', sep=',')
         countbydate.to_csv(path + '/timeseriescommon.csv', sep=',')
 
@@ -157,7 +160,7 @@ def plotseries(dataframe, lineagelist, regionlist, output, enddate):
         ax2.title.set_text('Lag plot for ' + lineage + ' for '
                            + str(regionlist))
         plt.tight_layout()
-        plt.savefig(path + '/' + lineage + '_timeseries.png')
+        plt.savefig(path + '/' + lineage + '_timeseries.png', format="png", dpi=300)
         plt.clf()
         plt.close(fig)
 
@@ -296,6 +299,7 @@ def plottopseries(dataframe, lineagelist, regionlist, output, enddate, adm,
               ncol=len(msizes))
 
     plt.savefig(path + '/' + 'allLineages.png', format="png", dpi=300)
+    plt.savefig(path + '/' + 'allLineages.svg', format="svg")
     plt.clf()
     plt.close(fig)
 

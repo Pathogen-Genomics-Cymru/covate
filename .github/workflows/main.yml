@@ -38,7 +38,7 @@ jobs:
       - name: Lint with flake8
         run: |
           # stop the build if there are linting errors
-          flake8 ./covate --count --show-source --statistics
+          flake8 ./covate --count --show-source --statistics --extend-ignore E731 --max-line-length 99
       - name: Run integration test
         working-directory: ./tests
         run: |

@@ -106,5 +106,7 @@ def laggedcorr(timeseries, lineagelist, primaryregion, secondregion, enddate,
     plt.rcParams['font.size'] = '10'
     plt.savefig(path + '/' + primaryregion + "_" + secondregion
                 + "_crosscorrelation.png", format="png")
+    plt.savefig(path + '/' + primaryregion + "_" + secondregion
+                + "_crosscorrelation.svg", format="svg")
     plt.clf()
     plt.close(fig)

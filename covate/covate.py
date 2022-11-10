@@ -5,6 +5,7 @@ import argparse
 from .build_time_series import buildseries
 from .build_model import buildmodel
 from .cross_correlation import crosscorrelation
+from .healthboard import buildhbseries
 
 
 def main():
@@ -53,6 +54,15 @@ def main():
                         required=False, action="store_true",
                         help="Run cross-correlation analysis")
 
+    parser.add_argument("-b", "--health-board", dest="healthboard",
+                        required=False, action="store_true",
+                        help="Run health-board analysis")
+
+    parser.add_argument("-s", "--hb-csv", dest="hbcsv",
+                        required=False,
+                        help="""Input healthboard csv, expects columns: cog_id,
+                        HB""")
+
     parser.add_argument("-f", "--primary-region", dest="primaryregion",
                         required=False, default="Wales",
                         help="""Region of primary interest for
@@ -74,6 +84,13 @@ def main():
         buildseries(args.metadata, args.regions, args.adm, args.lineagetype,
                     args.timeperiod, args.enddate, args.output, args.nsteps,
                     False, args.crosscorr, args.primaryregion))
+
+    # run healthboard analysis
+    if args.healthboard:
+
+        buildhbseries(args.metadata, args.adm, args.lineagetype,
+                      args.timeperiod, args.enddate, args.output,
+                      False, args.primaryregion, args.hbcsv)
 
     # run cross-correlation analysis
     if args.crosscorr:
