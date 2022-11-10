@@ -1,6 +1,7 @@
 ![Build Status](https://github.com/Pathogen-Genomics-Cymru/covate/workflows/Covate-CI/badge.svg)
+![Build Status](https://github.com/Pathogen-Genomics-Cymru/covate/workflows/docker-build/badge.svg)
 # covate #
-Covate uses the COG-UK metadata to forecast the time series for lineages of SARS-CoV-2 that are common to a specified list of regions. It can also be used to investigate the likelihood of lineages being imported between regions.
+Covate uses the COG-UK metadata to examine the relationship of SARS-CoV-2 lineage growth between a specified list of UK regions. It can forecast the time series for lineages of SARS-CoV-2 that are common to all the specified regions. It can also be used to investigate the likelihood of lineages being imported between the regions. When provided with the relevant metadata, it can also produce an analysis of the lineages observed in the Welsh health boards.
 
 Covate consists of four analyses:
 1) **PREDICT, --predict ,-p** <br />
