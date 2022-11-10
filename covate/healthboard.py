@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import os
 import pandas as pd
 import numpy as np
@@ -13,9 +11,6 @@ def buildhbseries(metadata, adm, lineagetype, timeperiod, enddate,
                   output, nsteps, primaryregion, hbdata):
     """ Build HB time series for lineages in primary region (WLS)"""
 
-    # set path
-    path = os.path.join(output, str(getenddate(enddate)), 'healthboard')
-
     # load metadata and index by date
     df = pd.read_csv(metadata, usecols=['cog_id', adm, 'sample_date',
                                         lineagetype, 'phylotype'],
@@ -25,6 +20,9 @@ def buildhbseries(metadata, adm, lineagetype, timeperiod, enddate,
 
     # select time period
     df, enddate = gettimeperiod(df, timeperiod, enddate, False, False)
+
+    # set path
+    path = os.path.join(output, str(getenddate(enddate)), 'healthboard')
 
     # only keep primary region, e.g. UK-WLS
     wal = df[df[adm].str.match(primaryregion, na=False)]
@@ -130,7 +128,8 @@ def plotuniquehb(wal, lineagetype, output, enddate):
 
     # plot
     # open wales map
-    im = Image.open('static/hb.png')
+    filepath = os.path.dirname(__file__)
+    im = Image.open(filepath + '/static/hb.png')
     height = im.size[1]
 
     # need a float array between 0-1

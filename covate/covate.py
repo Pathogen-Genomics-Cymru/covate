@@ -89,7 +89,7 @@ def main():
     if args.healthboard:
 
         buildhbseries(args.metadata, args.adm, args.lineagetype,
-                      args.timeperiod, enddate, args.output,
+                      args.timeperiod, args.enddate, args.output,
                       False, args.primaryregion, args.hbcsv)
 
     # run cross-correlation analysis
